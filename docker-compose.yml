@@ -1,0 +1,62 @@
+version: '3.8'
+services:
+  trial_postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: trialmatch
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: trial_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trialmatch"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trial_network
+
+  trial_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://trialmatch:changeme@trial_postgres:5432/trial_db
+    depends_on:
+      trial_postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+    networks:
+      - trial_network
+
+  metabase:
+    image: metabase/metabase:latest
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: trial_db
+      MB_DB_HOST: trial_postgres
+      MB_DB_PORT: 5432
+      MB_DB_USER: trialmatch
+      MB_DB_PASS: changeme
+    depends_on:
+      trial_postgres:
+        condition: service_healthy
+    volumes:
+      - metabase_data:/metabase-data
+    networks:
+      - trial_network
+
+volumes:
+  postgres_data:
+  metabase_data:
+
+networks:
+  trial_network:
+    driver: bridge
