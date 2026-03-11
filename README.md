@@ -76,6 +76,20 @@ Automates clinical trial patient recruitment through:
 
 ## 🚀 Quick Start
 
+## 📸 Screenshots
+
+### FastAPI Documentation
+![API Docs](docs/screenshots/api-docs.png)
+
+### Metabase Analytics Dashboard
+![Dashboard](docs/screenshots/metabase-dashboard.png)
+
+### ML Model Feature Importance
+![ML Model](docs/screenshots/ml-model-info.png)
+
+### Database Schema
+![Database](docs/screenshots/db-schema.png)
+
 ### Prerequisites
 - Docker & Docker Compose
 - Python 3.11+
