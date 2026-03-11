@@ -34,46 +34,17 @@ Automates clinical trial patient recruitment through:
 └──────────────────────────┘
 ```
 
+
 ## 📋 Features
 
-### Step 1-2: Core Backend
-- FastAPI REST API with async/await
-- SQLAlchemy ORM + PostgreSQL
-- CRUD endpoints for patients, trials, enrollments
-
-### Step 3: Eligibility Matching
-- Rule-based matching engine
-- Inclusion/exclusion criteria evaluation
-- Cohort analysis
-
-### Step 4: NLP Processing
-- spaCy clinical entity extraction
-- Medical abbreviation handling
-- Clinical note parsing
-
-### Step 5: FHIR Integration
-- Mock FHIR R4 data generation
-- HL7 FHIR Bundle serialization
-- Patient/Observation resources
-
-### Step 6: ML Predictions
-- XGBoost classifier (100 estimators)
-- 14 patient features
-- Enrollment probability scoring
-- Feature importance analysis
-
-### Step 7: Metabase Dashboard
-- Real-time analytics views
-- Enrollment progress tracking
-- Eligibility barrier analysis
-- ML prediction distribution
-
-### Step 8: Automated Recruitment
-- ML-scored patient identification
-- SMTP email integration
-- Batch outreach automation
-- Match score thresholds
-
+- **FastAPI REST API** - Async/await with SQLAlchemy ORM
+- **CRUD Operations** - Patients, trials, enrollments
+- **Eligibility Matching** - Rule-based inclusion/exclusion criteria
+- **NLP Extraction** - spaCy clinical entity recognition
+- **FHIR R4** - Mock data generation & serialization
+- **XGBoost ML** - 14-feature enrollment probability predictor
+- **Metabase Dashboard** - Real-time analytics & reporting
+- **Auto Recruitment** - ML-scored patient outreach via SMTP
 ## 🚀 Quick Start
 
 ## 📸 Screenshots
