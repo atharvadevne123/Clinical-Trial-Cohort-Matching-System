@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import smtplib
-from datetime import datetime
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from typing import Any, Dict, List, Optional
 
@@ -109,7 +109,7 @@ class RecruitmentEngine:
 
         results: Dict[str, Any] = {
             "trial_id": trial_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "threshold": threshold,
             "candidates_scored": len(candidates),
             "emails_sent": 0,

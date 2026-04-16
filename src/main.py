@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from fastapi import FastAPI, Depends, HTTPException, Security, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
@@ -54,6 +55,14 @@ app = FastAPI(
     description="Match patients to clinical trials using rule-based eligibility and ML enrollment prediction.",
     version="1.0.0",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(create_ml_router())
@@ -413,6 +422,71 @@ def import_fhir_patient(fhir_patient_id: str, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(patient)
     return {"imported": True, "patient_id": patient.id, "profile": profile}
+
+
+# ------------------------------------------------------------------
+# Recruitment
+# ------------------------------------------------------------------
+
+
+@app.get("/recruitment/candidates/{trial_id}", tags=["Recruitment"])
+async def get_recruitment_candidates(
+    trial_id: str,
+    threshold: float = Query(0.5, ge=0.0, le=1.0, description="Minimum enrollment probability"),
+    db: Session = Depends(get_db),
+):
+    """Score all un-enrolled patients against a trial and return ranked candidates."""
+    if not db.query(Trial).filter(Trial.id == trial_id).first():
+        raise HTTPException(status_code=404, detail="Trial not found")
+    from src.recruitment import RecruitmentEngine
+    engine = RecruitmentEngine()
+    candidates = await engine.score_eligible_patients(trial_id, threshold)
+    return {
+        "trial_id": trial_id,
+        "threshold": threshold,
+        "total": len(candidates),
+        "candidates": candidates,
+    }
+
+
+@app.post("/recruitment/notify/{patient_id}/{trial_id}", tags=["Recruitment"], dependencies=[Depends(require_api_key)])
+async def send_recruitment_notification(
+    patient_id: str,
+    trial_id: str,
+    db: Session = Depends(get_db),
+):
+    """Send a recruitment email to a single patient for a given trial."""
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    trial = db.query(Trial).filter(Trial.id == trial_id).first()
+    if not trial:
+        raise HTTPException(status_code=404, detail="Trial not found")
+
+    from src.recruitment import RecruitmentEngine, _patient_to_dict
+    features = EnrollmentPredictor._dict_to_features(_patient_to_dict(patient))
+    ml_result = predictor.predict(features, patient_id, trial_id)
+
+    candidate = {
+        "patient_id": patient_id,
+        "patient_name": f"{patient.first_name} {patient.last_name}",
+        "email": patient.email or f"patient-{patient_id}@trial.local",
+        "score": ml_result.enrollment_probability,
+        "confidence": ml_result.confidence,
+        "recommendation": ml_result.recommendation,
+        "trial_id": trial_id,
+        "trial_name": trial.name,
+    }
+    engine = RecruitmentEngine()
+    email_sent = engine.send_recruitment_email(candidate)
+    return {
+        "notified": True,
+        "patient_id": patient_id,
+        "trial_id": trial_id,
+        "email_sent": email_sent,
+        "score": ml_result.enrollment_probability,
+        "recommendation": ml_result.recommendation,
+    }
 
 
 # ------------------------------------------------------------------

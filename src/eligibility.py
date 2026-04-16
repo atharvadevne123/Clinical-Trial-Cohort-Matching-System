@@ -88,15 +88,9 @@ class EligibilityMatcher:
         return self.operators[operator](patient_value, value)
 
     def _get_patient_field(self, patient: Dict[str, Any], field: str) -> Any:
-        if "." in field:
-            value = patient
-            for part in field.split("."):
-                if isinstance(value, dict):
-                    value = value.get(part)
-                else:
-                    return None
-            return value
-
+        # Check prefixed fields FIRST — before the dot check, because ICD-10
+        # codes like "I48.91" contain dots which would otherwise trigger the
+        # nested-path branch and silently return None.
         if field == "age":
             dob = patient.get("date_of_birth")
             if dob:
@@ -107,18 +101,35 @@ class EligibilityMatcher:
             return None
 
         if field.startswith("condition:"):
-            code = field.replace("condition:", "")
+            code = field[len("condition:"):]
             for cond in patient.get("conditions", []) or []:
-                if cond.get("code") == code or cond.get("icd10_code") == code:
+                if isinstance(cond, dict):
+                    if cond.get("code") == code or cond.get("icd10_code") == code:
+                        return code
+                elif str(cond) == code:
                     return code
             return None
 
         if field.startswith("medication:"):
-            code = field.replace("medication:", "")
+            code = field[len("medication:"):]
             for med in patient.get("medications", []) or []:
-                if med.get("code") == code or med.get("medication_code") == code:
+                if isinstance(med, dict):
+                    if med.get("code") == code or med.get("medication_code") == code:
+                        return code
+                elif str(med) == code:
                     return code
             return None
+
+        # Generic nested-path lookup (e.g. "address.city") — safe now that
+        # condition:/medication: prefixes are already handled above.
+        if "." in field:
+            value = patient
+            for part in field.split("."):
+                if isinstance(value, dict):
+                    value = value.get(part)
+                else:
+                    return None
+            return value
 
         return patient.get(field)
 
