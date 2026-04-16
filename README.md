@@ -2,301 +2,250 @@
 
 **AI-powered patient-trial matching platform** using FastAPI, PostgreSQL, XGBoost ML, and Metabase analytics.
 
-## 🎯 Project Overview
+## Project Overview
 
 Automates clinical trial patient recruitment through:
-- Eligibility rule matching (inclusion/exclusion criteria)
-- NLP clinical profile extraction from notes
-- XGBoost enrollment probability prediction
-- FHIR-compliant data representation
-- Real-time analytics dashboard
-- Automated patient outreach engine
+- Rule-based eligibility matching (all inclusion/exclusion criteria evaluated)
+- Keyword NLP with negation detection for clinical note extraction
+- XGBoost enrollment probability prediction (14 features)
+- FHIR R4 client for EHR integration
+- Metabase analytics dashboard
+- Async patient outreach recruitment engine
 
-## 🏗️ Architecture
+## Screenshots
+
+### API Documentation (Swagger UI)
+![API Docs](docs/screenshots/01_api_docs.png)
+
+### Live Status — 300 patients · 25 trials · 7 500 matches
+![API Status](docs/screenshots/02_api_status.png)
+
+### Patient List (paginated)
+![Patients](docs/screenshots/03_patients_list.png)
+
+### Trial Catalogue
+![Trials](docs/screenshots/04_trials_list.png)
+
+### Patient Detail
+![Patient Detail](docs/screenshots/05_patient_detail.png)
+
+### Trial Detail
+![Trial Detail](docs/screenshots/06_trial_detail.png)
+
+### Trial Matches
+![Trial Matches](docs/screenshots/07_trial_matches.png)
+
+### Eligible Matches Only
+![Eligible Matches](docs/screenshots/08_eligible_matches.png)
+
+### Patient Match History
+![Patient Matches](docs/screenshots/09_patient_matches.png)
+
+### ML Model — XGBoost Feature Importances
+![ML Model](docs/screenshots/10_ml_model_info.png)
+
+### ReDoc API Reference
+![ReDoc](docs/screenshots/11_api_redoc.png)
+
+---
+
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    FastAPI Server (8000)                │
-├──────────────┬──────────────┬──────────────────────────┤
-│   CRUD Ops   │  Eligibility │  ML Predictions          │
-│  Patients    │   Matching   │  XGBoost Model           │
-│  Trials      │  NLP Extract │  Batch Scoring           │
-├──────────────┴──────────────┴──────────────────────────┤
-│          PostgreSQL Database (5432)                      │
-├──────────────┬──────────────┬──────────────────────────┤
-│   Patients   │   Trials     │  ML Predictions          │
-│  Enrollments │  Criteria    │  Eligibility Matches     │
-└──────────────┴──────────────┴──────────────────────────┘
-       ↓
-┌──────────────────────────┐
-│  Metabase Dashboard      │
-│  (3000) Analytics        │
-└──────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                   FastAPI Server :8000                   │
+├──────────────┬─────────────────┬────────────────────────┤
+│  Patients /  │  Eligibility    │  ML Predictions        │
+│  Trials CRUD │  Matching       │  XGBoost Classifier    │
+│  NLP Notes   │  Rule Engine    │  Batch Scoring         │
+│  FHIR Import │  All criteria   │  Feature Importance    │
+├──────────────┴─────────────────┴────────────────────────┤
+│              PostgreSQL 16 :5432  (trial_db)            │
+│   patients · trials · patient_trial_matches             │
+└──────────────────────────┬──────────────────────────────┘
+                           ↓
+          ┌────────────────────────────┐
+          │   Metabase Dashboard :3000 │
+          │   Charts · Cohort funnels  │
+          └────────────────────────────┘
 ```
 
+---
 
-## 📋 Features
-
-- **FastAPI REST API** - Async/await with SQLAlchemy ORM
-- **CRUD Operations** - Patients, trials, enrollments
-- **Eligibility Matching** - Rule-based inclusion/exclusion criteria
-- **NLP Extraction** - spaCy clinical entity recognition
-- **FHIR R4** - Mock data generation & serialization
-- **XGBoost ML** - 14-feature enrollment probability predictor
-- **Metabase Dashboard** - Real-time analytics & reporting
-- **Auto Recruitment** - ML-scored patient outreach via SMTP
-## 🚀 Quick Start
-
-## 📸 Screenshots
-
-### FastAPI Documentation
-![API Docs](docs/screenshots/api-docs.png)
-
-### Metabase Analytics Dashboard
-![Dashboard](docs/screenshots/metabase-dashboard.png)
-
-### ML Model Feature Importance
-![ML Model](docs/screenshots/ml-model-info.png)
-
-### Database Schema
-![Database](docs/screenshots/db-schema.png)
+## Quick Start
 
 ### Prerequisites
 - Docker & Docker Compose
-- Python 3.11+
-- 4GB RAM minimum
+- 4 GB RAM minimum
 
-### Setup
+### Run
 
 ```bash
-# Clone repo
-git clone https://github.com/yourusername/clinical-trial-cohort
+git clone <repo-url>
 cd clinical-trial-cohort
 
-# Start services
-docker-compose up -d
+# Start all services
+docker compose up -d
 
-# Wait for initialization (30s)
-sleep 30
-
-# Verify API
+# Wait ~15 s for the API to be ready
 curl http://localhost:8000/health
+# → {"status":"healthy"}
 
-# Verify DB
-docker exec clinicaltrialcohort-trial_postgres-1 psql -U trialmatch -d trial_db -c "SELECT 1;"
+# Seed 300 patients, 25 trials, 7 500 matches
+curl -X POST http://localhost:8000/admin/seed
+
+# API docs
+open http://localhost:8000/docs
+
+# Metabase analytics
+open http://localhost:3000
 ```
 
-### Seed Sample Data
+### Credentials (dev defaults — change via `.env`)
+| Service | URL | Credentials |
+|---|---|---|
+| API | http://localhost:8000 | No auth in dev (`API_KEY` unset) |
+| Metabase | http://localhost:3000 | Set on first launch |
+| PostgreSQL | localhost:5432 | `trialmatch / changeme` |
 
-```bash
-# Create 5 sample patients
-docker exec clinicaltrialcohort-trial_postgres-1 psql -U trialmatch -d trial_db << 'EOF'
-INSERT INTO patients (age, gender, num_conditions, num_medications, has_diabetes, has_hypertension, has_heart_disease, has_cancer, has_afib, smoker, bmi, prior_trial_participation, distance_to_site_km)
-VALUES
-(52, 'M', 3, 4, true, true, false, false, false, true, 28.5, false, 12.3),
-(48, 'F', 2, 3, false, true, false, false, false, false, 24.2, true, 8.5),
-(65, 'M', 4, 5, true, true, true, false, true, false, 29.1, false, 20.0),
-(41, 'F', 1, 2, false, false, false, false, false, true, 22.8, false, 5.5),
-(58, 'M', 2, 3, true, false, false, false, false, false, 26.9, true, 15.2);
-EOF
-```
+---
 
-## 🔗 API Endpoints
+## API Endpoints
 
 ### Patients
-```bash
-GET  /patients                    # List all patients
-POST /patients                    # Create patient
-GET  /patients/{patient_id}       # Get patient details
-```
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/patients?skip=0&limit=50` | Paginated patient list |
+| `POST` | `/patients` | Create patient |
+| `GET` | `/patients/{id}` | Patient detail |
+| `GET` | `/patients/{id}/matches` | All trial matches for a patient |
+| `POST` | `/patients/{id}/analyze-notes` | NLP note analysis → update conditions/meds |
 
 ### Trials
-```bash
-GET  /trials                      # List all trials
-POST /trials                      # Create trial
-GET  /trials/{trial_id}          # Get trial details
-```
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/trials?skip=0&limit=50` | Paginated trial list |
+| `POST` | `/trials` | Create trial |
+| `GET` | `/trials/{id}` | Trial detail |
 
-### Eligibility Matching
-```bash
-POST /match/{patient_id}/{trial_id}   # Check eligibility
-GET  /matches/{trial_id}              # Get all matches for trial
-```
+### Matching
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/match/{patient_id}/{trial_id}` | Run rule + ML match (idempotent — 409 if already exists) |
+| `GET` | `/matches/{trial_id}?status=ELIGIBLE` | Trial match list with filters |
 
-### ML Predictions
-```bash
-GET  /ml/model/info              # Model metadata
-POST /ml/predict                 # Single prediction
-POST /ml/predict/batch           # Batch predictions
-```
+### ML Prediction
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/ml/predict` | Single enrollment probability |
+| `POST` | `/ml/predict/batch` | Batch scoring, ranked by probability |
+| `GET` | `/ml/model/info` | Feature importances |
 
-### NLP Processing
-```bash
-POST /nlp/extract-entities       # Extract clinical entities
-POST /nlp/clinical-profile       # Generate patient profile
-```
+### NLP
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/nlp/extract-entities` | Extract conditions, medications, symptoms (with negation) |
+| `POST` | `/nlp/clinical-profile` | Summarise disease burden |
 
-## 📊 Analytics Dashboard
+### FHIR
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/fhir/import/{fhir_id}` | Fetch from FHIR server and upsert patient |
 
-Access Metabase at **http://localhost:3000**
+### Admin
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/admin/seed` | Populate DB with 300 patients · 25 trials · 7 500 matches |
+| `GET` | `/status` | Live record counts |
 
-**Login:**
-- Email: admin@trial.local
-- Password: changeme123
+---
 
-**Dashboard Cards:**
-- Enrollment rate (%)
-- Trial progress tracking
-- Top eligibility barriers
-- ML prediction distribution
-- Patient demographics
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 clinical-trial-cohort/
 ├── src/
-│   ├── __init__.py
-│   ├── main.py              # FastAPI app
-│   ├── models.py            # SQLAlchemy ORM
-│   ├── schemas.py           # Pydantic schemas
-│   ├── database.py          # DB connection
-│   ├── eligibility.py       # Matching logic
-│   ├── nlp.py               # NLP extraction
-│   ├── fhir.py              # FHIR generation
-│   ├── ml_prediction.py     # XGBoost model
-│   └── recruitment.py       # Recruitment engine
+│   ├── main.py           # FastAPI app — lifespan, auth, all routes
+│   ├── models.py         # SQLAlchemy ORM — Patient, Trial, PatientTrialMatch
+│   ├── schemas.py        # Pydantic v2 request/response schemas
+│   ├── eligibility.py    # Rule-based matching engine
+│   ├── nlp.py            # Keyword NLP with negation detection
+│   ├── fhir.py           # FHIR R4 httpx client with mock fallback
+│   ├── ml_prediction.py  # XGBoost classifier, joblib persistence
+│   ├── recruitment.py    # Async recruitment batch engine
+│   └── seed_data.py      # 300 patients · 25 trials · 7 500 matches
+├── docs/screenshots/     # All UI screenshots
+├── .env                  # Local credentials (gitignored)
+├── .env.example          # Template
 ├── Dockerfile
 ├── docker-compose.yml
-├── requirements.txt
-└── README.md
+└── requirements.txt
 ```
-
-## 🔧 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| API | FastAPI 0.104.1 |
-| Database | PostgreSQL 16 |
-| ORM | SQLAlchemy 2.0 |
-| ML | XGBoost 2.0, scikit-learn 1.3 |
-| NLP | spaCy 3.7 |
-| Analytics | Metabase 0.49 |
-| Container | Docker, Docker Compose |
-
-## 📈 ML Model
-
-**XGBoost Classifier**
-- Estimators: 100
-- Max depth: 4
-- Learning rate: 0.1
-
-**Features (14):**
-1. age
-2. gender_male
-3. num_conditions
-4. num_medications
-5. has_diabetes
-6. has_hypertension
-7. has_heart_disease
-8. has_cancer
-9. has_afib
-10. smoker
-11. bmi
-12. prior_trial_participation
-13. distance_to_site_km
-14. num_exclusion_flags
-
-**Feature Importance:**
-- Cancer: 19.3%
-- Age: 13.9%
-- Prior participation: 10.8%
-- Exclusion flags: 9.7%
-
-## 🧪 Testing
-
-```bash
-# Health check
-curl http://localhost:8000/health
-
-# API docs
-curl http://localhost:8000/docs
-
-# List patients
-curl http://localhost:8000/patients
-
-# Get ML model info
-curl http://localhost:8000/ml/model/info
-
-# Batch prediction
-curl -X POST http://localhost:8000/ml/predict/batch \
-  -H "Content-Type: application/json" \
-  -d '[{"age": 52, "gender_male": 1, ...}]'
-```
-
-## 📊 Database Schema
-
-### patients
-```sql
-CREATE TABLE patients (
-  id SERIAL PRIMARY KEY,
-  age INT,
-  gender CHAR(1),
-  num_conditions INT,
-  num_medications INT,
-  has_diabetes BOOLEAN,
-  has_hypertension BOOLEAN,
-  has_heart_disease BOOLEAN,
-  has_cancer BOOLEAN,
-  has_afib BOOLEAN,
-  smoker BOOLEAN,
-  bmi DECIMAL,
-  prior_trial_participation BOOLEAN,
-  distance_to_site_km DECIMAL,
-  trial_id INT
-);
-```
-
-### trials
-```sql
-CREATE TABLE trials (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255),
-  description TEXT,
-  target_enrollment INT
-);
-```
-
-### enrollments
-```sql
-CREATE TABLE enrollments (
-  patient_id INT REFERENCES patients(id),
-  trial_id INT REFERENCES trials(id),
-  PRIMARY KEY (patient_id, trial_id)
-);
-```
-
-## 🔐 Security
-
-- Database credentials in docker-compose (dev only)
-- HTTPS ready (Uvicorn + nginx in production)
-- SQL injection prevention (SQLAlchemy parameterized queries)
-- CORS configured for frontend integration
-
-## 📝 License
-
-MIT License - See LICENSE file
-
-## 👥 Contributing
-
-1. Fork repository
-2. Create feature branch
-3. Submit pull request
-
-## 📞 Support
-
-For issues, please open a GitHub issue or contact the maintainers.
 
 ---
 
-**Built with ❤️ for clinical research automation**
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| API | FastAPI 0.104, Python 3.11 |
+| Database | PostgreSQL 16 |
+| ORM | SQLAlchemy 2.0 |
+| ML | XGBoost 2.0+, scikit-learn 1.3, joblib |
+| NLP | Keyword matching with negation detection |
+| HTTP client | httpx (FHIR R4) |
+| Analytics | Metabase |
+| Container | Docker, Docker Compose |
+
+---
+
+## ML Model
+
+**XGBoost Classifier** — trained on 1 000 synthetic patients, persisted as `enrollment_model.joblib`
+
+| Hyperparameter | Value |
+|---|---|
+| Estimators | 100 |
+| Max depth | 4 |
+| Learning rate | 0.1 |
+| Subsample | 0.8 |
+
+**14 features** (top by importance):
+1. `age` — 13.9%
+2. `has_cancer` — 19.3%
+3. `prior_trial_participation` — 10.8%
+4. `num_exclusion_flags` — 9.7%
+5. `num_medications` — 7.6%
+6. `distance_to_site_km` — 5.8%
+7. … (8 more)
+
+---
+
+## Eligibility Logic
+
+Each match stores **four scores**:
+
+| Score | Range | Source |
+|---|---|---|
+| `rule_match_score` | 0–100 | Fraction of inclusion criteria met |
+| `enrollment_probability` | 0.0–1.0 | Raw XGBoost output |
+| `ml_match_score` | 0–100 | `enrollment_probability × 100` |
+| `combined_score` | 0–100 | `50% rule + 50% ML` |
+
+A patient is `ELIGIBLE` only when **all** inclusion criteria are met and **no** exclusion criteria are triggered.
+
+---
+
+## Security
+
+- Credentials in `.env` (not source); `.env.example` provided
+- Optional API key auth — set `API_KEY` env var to enforce on all write endpoints
+- `X-API-Key: <key>` header required when `API_KEY` is set
+- SQL injection prevention via SQLAlchemy parameterised queries
+- Unique constraint on `(patient_id, trial_id)` prevents duplicate match records
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE)

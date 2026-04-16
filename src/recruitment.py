@@ -1,122 +1,157 @@
+"""Recruitment Engine — score candidates and dispatch outreach emails."""
+
 import asyncio
+import logging
 import smtplib
 from datetime import datetime
 from email.mime.text import MIMEText
-from sqlalchemy import select
-from src.models import Patient, Trial, Enrollment
-from src.database import SessionLocal
-from src.ml_prediction import EnrollmentPredictor
+from typing import Any, Dict, List, Optional
+
+from src.models import Patient, Trial, PatientTrialMatch, SessionLocal
+from src.ml_prediction import predictor, EnrollmentPredictor
+
+logger = logging.getLogger(__name__)
+
+
+def _patient_to_dict(p: Patient) -> Dict[str, Any]:
+    """Convert a Patient ORM object to the dict format expected by the predictor."""
+    return {
+        "id": str(p.id),
+        "date_of_birth": p.date_of_birth,
+        "gender": p.gender,
+        "conditions": p.conditions or [],
+        "medications": p.medications or [],
+    }
+
 
 class RecruitmentEngine:
-    def __init__(self, smtp_host="localhost", smtp_port=1025):
-        self.predictor = EnrollmentPredictor()
+    def __init__(self, smtp_host: str = "localhost", smtp_port: int = 1025):
         self.smtp_host = smtp_host
         self.smtp_port = smtp_port
-        self.db = SessionLocal()
 
-    async def score_eligible_patients(self, trial_id: int, threshold: float = 0.5):
-        trial = self.db.query(Trial).filter(Trial.id == trial_id).first()
-        if not trial:
-            return []
+    async def score_eligible_patients(
+        self, trial_id: str, threshold: float = 0.5
+    ) -> List[Dict[str, Any]]:
+        """Return patients above the enrollment probability threshold, sorted by score."""
+        with SessionLocal() as db:
+            trial = db.query(Trial).filter(Trial.id == trial_id).first()
+            if not trial:
+                logger.warning(f"Trial {trial_id} not found.")
+                return []
 
-        patients = self.db.query(Patient).all()
-        scored = []
-        
-        for p in patients:
-            enrolled = self.db.query(Enrollment).filter(
-                Enrollment.patient_id == p.id,
-                Enrollment.trial_id == trial_id
-            ).first()
-            if enrolled:
-                continue
+            patients = db.query(Patient).all()
+            scored: List[Dict[str, Any]] = []
 
-            features = {
-                'age': p.age,
-                'gender_male': 1 if p.gender == 'M' else 0,
-                'num_conditions': p.num_conditions,
-                'num_medications': p.num_medications,
-                'has_diabetes': p.has_diabetes,
-                'has_hypertension': p.has_hypertension,
-                'has_heart_disease': p.has_heart_disease,
-                'has_cancer': p.has_cancer,
-                'has_afib': p.has_afib,
-                'smoker': p.smoker,
-                'bmi': p.bmi,
-                'prior_trial_participation': p.prior_trial_participation,
-                'distance_to_site_km': p.distance_to_site_km,
-                'num_exclusion_flags': 0
-            }
-            
-            prob = self.predictor.predict([features])[0]
-            if prob >= threshold:
-                scored.append({
-                    'patient_id': p.id,
-                    'patient_name': f"Patient_{p.id}",
-                    'email': f"patient{p.id}@trial.local",
-                    'score': prob,
-                    'trial_id': trial_id,
-                    'trial_name': trial.name
-                })
-        
-        return sorted(scored, key=lambda x: x['score'], reverse=True)
+            for p in patients:
+                # Skip patients already enrolled in this trial
+                already_enrolled = db.query(PatientTrialMatch).filter(
+                    PatientTrialMatch.patient_id == p.id,
+                    PatientTrialMatch.trial_id == trial_id,
+                    PatientTrialMatch.enrolled == True,
+                ).first()
+                if already_enrolled:
+                    continue
 
-    def send_recruitment_email(self, patient, trial_name):
-        subject = f"You May Be Eligible for {trial_name} Clinical Trial"
-        body = f"""
-Dear {patient['patient_name']},
+                features = EnrollmentPredictor._dict_to_features(_patient_to_dict(p))
+                result = predictor.predict(features, str(p.id), trial_id)
 
-Based on our analysis, you may be a good match for our {trial_name} clinical trial.
+                if result.enrollment_probability >= threshold:
+                    scored.append({
+                        "patient_id": p.id,
+                        "patient_name": f"{p.first_name} {p.last_name}",
+                        "email": p.email or f"patient-{p.id}@trial.local",
+                        "score": result.enrollment_probability,
+                        "confidence": result.confidence,
+                        "recommendation": result.recommendation,
+                        "trial_id": trial_id,
+                        "trial_name": trial.name,
+                    })
 
-Match Score: {patient['score']:.2%}
+        return sorted(scored, key=lambda x: x["score"], reverse=True)
 
-We believe your health profile aligns well with this study. If interested, 
-please visit: http://localhost:8000/enrollment/{patient['patient_id']}/{patient['trial_id']}
-
-Best regards,
-Clinical Trial Cohort Team
-        """
-        
+    def send_recruitment_email(self, candidate: Dict[str, Any]) -> bool:
+        """Send a recruitment email to a candidate. Returns True on success."""
+        subject = f"Invitation: {candidate['trial_name']} Clinical Trial"
+        body = (
+            f"Dear {candidate['patient_name']},\n\n"
+            f"Based on your health profile, you may be a strong match for our "
+            f"{candidate['trial_name']} clinical trial.\n\n"
+            f"Match probability: {candidate['score']:.0%}\n"
+            f"Confidence: {candidate['confidence']}\n\n"
+            f"To learn more or express interest, please contact your care team "
+            f"and reference trial ID: {candidate['trial_id']}.\n\n"
+            f"Best regards,\n"
+            f"Clinical Trial Cohort Team\n"
+        )
         try:
             msg = MIMEText(body)
-            msg['Subject'] = subject
-            msg['From'] = 'noreply@trial.local'
-            msg['To'] = patient['email']
-            
-            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+            msg["Subject"] = subject
+            msg["From"] = "noreply@trial.local"
+            msg["To"] = candidate["email"]
+            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=5) as server:
                 server.send_message(msg)
+            logger.info(f"Recruitment email sent to {candidate['patient_id']}")
             return True
         except Exception as e:
-            print(f"Email failed: {e}")
+            logger.warning(f"Email failed for {candidate['patient_id']}: {e}")
             return False
 
-    async def run_recruitment_batch(self, trial_id: int, threshold: float = 0.6, max_recruits: int = 10):
+    async def run_recruitment_batch(
+        self,
+        trial_id: str,
+        threshold: float = 0.6,
+        max_recruits: int = 10,
+        dry_run: bool = False,
+    ) -> Dict[str, Any]:
+        """Score patients, optionally send emails, and return a summary."""
         candidates = await self.score_eligible_patients(trial_id, threshold)
         candidates = candidates[:max_recruits]
-        
-        results = {
-            'trial_id': trial_id,
-            'timestamp': datetime.now().isoformat(),
-            'candidates_scored': len(candidates),
-            'emails_sent': 0,
-            'recruitment_results': []
+
+        results: Dict[str, Any] = {
+            "trial_id": trial_id,
+            "timestamp": datetime.utcnow().isoformat(),
+            "threshold": threshold,
+            "candidates_scored": len(candidates),
+            "emails_sent": 0,
+            "dry_run": dry_run,
+            "recruitment_results": [],
         }
-        
+
         for candidate in candidates:
-            sent = self.send_recruitment_email(candidate, candidate['trial_name'])
-            results['recruitment_results'].append({
-                'patient_id': candidate['patient_id'],
-                'score': candidate['score'],
-                'email_sent': sent
+            sent = False
+            if not dry_run:
+                sent = self.send_recruitment_email(candidate)
+                if sent:
+                    results["emails_sent"] += 1
+
+            results["recruitment_results"].append({
+                "patient_id": candidate["patient_id"],
+                "patient_name": candidate["patient_name"],
+                "score": round(candidate["score"], 4),
+                "confidence": candidate["confidence"],
+                "email_sent": sent,
             })
-            if sent:
-                results['emails_sent'] += 1
-        
+
         return results
 
-async def main():
-    engine = RecruitmentEngine()
-    results = await engine.run_recruitment_batch(trial_id=1, threshold=0.5, max_recruits=5)
-    print(results)
 
-if __name__ == '__main__':
-    asyncio.run(main())
+# ------------------------------------------------------------------
+# CLI entry point
+# ------------------------------------------------------------------
+
+async def _main():
+    logging.basicConfig(level=logging.INFO)
+    engine = RecruitmentEngine()
+    # Dry run to show candidates without sending emails
+    results = await engine.run_recruitment_batch(
+        trial_id="TRIAL_AFIB_001",
+        threshold=0.5,
+        max_recruits=10,
+        dry_run=True,
+    )
+    import json
+    print(json.dumps(results, indent=2, default=str))
+
+
+if __name__ == "__main__":
+    asyncio.run(_main())
