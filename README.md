@@ -1,3 +1,5 @@
+![Docker](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/docker-publish.yml/badge.svg) ![Python Package](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/python-publish.yml/badge.svg) ![Bump Version](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/bump-version.yml/badge.svg)
+
 # Clinical Trial Cohort Matching System
 
 **AI-powered patient-trial matching platform** using a React-style SPA, FastAPI, PostgreSQL, XGBoost ML, and Metabase analytics.
