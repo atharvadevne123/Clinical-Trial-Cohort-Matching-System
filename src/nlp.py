@@ -1,12 +1,16 @@
-"""NLP Pipeline for Clinical Entity Extraction"""
+"""NLP Pipeline for Clinical Entity Extraction.
+
+Provides keyword-based entity extraction with negation detection,
+severity inference, and symptom mapping for clinical free text.
+"""
 
 import logging
-from typing import Dict, List, Any, Optional
+from functools import lru_cache
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Words that negate the following entity (checked in a 60-char window before the keyword)
-_NEGATION_WORDS = [
+_NEGATION_WORDS: List[str] = [
     "no ", "not ", "without ", "denies ", "denied ",
     "no history of ", "negative for ", "rules out ",
     "ruled out ", "absence of ", "never had ",
@@ -14,10 +18,14 @@ _NEGATION_WORDS = [
 
 
 class ClinicalNLPProcessor:
-    """Keyword-based clinical NLP with negation detection."""
+    """Keyword-based clinical NLP processor with negation detection.
 
-    def __init__(self):
-        self.condition_keywords = {
+    Extracts conditions, medications, and symptoms from clinical notes using
+    a curated keyword dictionary and a 60-character negation window.
+    """
+
+    def __init__(self) -> None:
+        self.condition_keywords: Dict[str, Dict[str, Any]] = {
             "atrial fibrillation": {"codes": ["I48.91"], "type": "CONDITION"},
             "afib": {"codes": ["I48.91"], "type": "CONDITION"},
             "hypertension": {"codes": ["I10"], "type": "CONDITION"},
@@ -46,7 +54,7 @@ class ClinicalNLPProcessor:
             "prostate cancer": {"codes": ["C61"], "type": "CONDITION"},
         }
 
-        self.medication_keywords = {
+        self.medication_keywords: Dict[str, Dict[str, Any]] = {
             "warfarin": {"codes": ["B01AA03"], "type": "MEDICATION"},
             "apixaban": {"codes": ["B01AF02"], "type": "MEDICATION"},
             "aspirin": {"codes": ["N02BA01"], "type": "MEDICATION"},
@@ -63,7 +71,7 @@ class ClinicalNLPProcessor:
             "prednisone": {"codes": ["H02AB07"], "type": "MEDICATION"},
         }
 
-        self.severity_markers = {
+        self.severity_markers: Dict[str, int] = {
             "severe": 3,
             "critical": 4,
             "moderate": 2,
@@ -76,8 +84,16 @@ class ClinicalNLPProcessor:
     # Public API
     # ------------------------------------------------------------------
 
-    def extract_entities(self, text: str) -> Dict[str, List[Dict[str, Any]]]:
-        """Extract clinical entities from free text, skipping negated mentions."""
+    def extract_entities(self, text: str) -> Dict[str, Any]:
+        """Extract clinical entities from free text, skipping negated mentions.
+
+        Args:
+            text: Raw clinical note or narrative text.
+
+        Returns:
+            Dict with keys: conditions (list), medications (list),
+            symptoms (list), severity (dict mapping entity text to severity label).
+        """
         if not text:
             return {"conditions": [], "medications": [], "symptoms": [], "severity": {}}
 
@@ -114,15 +130,24 @@ class ClinicalNLPProcessor:
         return entities
 
     def summarize_clinical_profile(self, text: str) -> Dict[str, Any]:
-        """Return a structured summary of the clinical profile in the text."""
+        """Return a structured summary of the clinical profile in free text.
+
+        Args:
+            text: Raw clinical note or narrative text.
+
+        Returns:
+            Dict with condition/medication/symptom counts, lists,
+            severity map, and disease_burden label (low/moderate/high).
+        """
         entities = self.extract_entities(text)
+        num_conditions = len(entities["conditions"])
         burden = (
-            "low" if len(entities["conditions"]) <= 1
-            else "moderate" if len(entities["conditions"]) <= 3
+            "low" if num_conditions <= 1
+            else "moderate" if num_conditions <= 3
             else "high"
         )
         return {
-            "num_conditions": len(entities["conditions"]),
+            "num_conditions": num_conditions,
             "num_medications": len(entities["medications"]),
             "num_symptoms": len(entities["symptoms"]),
             "conditions": [e["text"] for e in entities["conditions"]],
@@ -137,7 +162,17 @@ class ClinicalNLPProcessor:
     # ------------------------------------------------------------------
 
     def _is_negated(self, text: str, keyword: str) -> bool:
-        """Return True if the keyword appears immediately after a negation phrase."""
+        """Return True if the keyword appears immediately after a negation phrase.
+
+        Checks a 60-character window before the keyword for any _NEGATION_WORDS entry.
+
+        Args:
+            text: Lowercased full text.
+            keyword: Entity keyword to check.
+
+        Returns:
+            True if negated, False otherwise.
+        """
         pos = text.find(keyword)
         if pos == -1:
             return False
@@ -145,6 +180,15 @@ class ClinicalNLPProcessor:
         return any(neg in window for neg in _NEGATION_WORDS)
 
     def _extract_severity(self, text: str, entity: str) -> Optional[str]:
+        """Find the nearest severity marker within 100 chars of an entity mention.
+
+        Args:
+            text: Lowercased full text.
+            entity: Entity keyword to locate.
+
+        Returns:
+            Severity label string, or None if no marker found.
+        """
         pos = text.find(entity)
         if pos == -1:
             return None
@@ -155,7 +199,15 @@ class ClinicalNLPProcessor:
         return None
 
     def _extract_symptoms(self, text: str) -> List[Dict[str, Any]]:
-        symptom_map = {
+        """Extract symptom mentions from lowercased text.
+
+        Args:
+            text: Lowercased clinical text.
+
+        Returns:
+            List of symptom dicts with text, canonical, and confidence keys.
+        """
+        symptom_map: Dict[str, str] = {
             "chest pain": "chest discomfort",
             "shortness of breath": "dyspnea",
             "difficulty breathing": "dyspnea",
