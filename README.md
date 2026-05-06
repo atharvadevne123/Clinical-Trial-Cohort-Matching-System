@@ -1,4 +1,4 @@
-![Docker](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/docker-publish.yml/badge.svg) ![Python Package](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/python-publish.yml/badge.svg) ![Bump Version](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/bump-version.yml/badge.svg)
+![CI](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/ci.yml/badge.svg) ![Docker](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/docker-publish.yml/badge.svg) ![Python Package](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/python-publish.yml/badge.svg) ![Bump Version](https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System/actions/workflows/bump-version.yml/badge.svg)
 
 # Clinical Trial Cohort Matching System
 
@@ -76,9 +76,26 @@ Automates clinical trial patient recruitment through:
 
 ---
 
+
 ## Quick Start
 
-### Prerequisites
+```bash
+# Clone and install
+git clone https://github.com/atharvadevne123/Clinical-Trial-Cohort-Matching-System
+cd Clinical-Trial-Cohort-Matching-System
+make install
+
+# Run tests
+make test
+
+# Start the API server
+make run
+
+# With Docker
+make docker-up
+```
+
+## Prerequisites
 - Docker & Docker Compose
 - 4 GB RAM minimum
 
