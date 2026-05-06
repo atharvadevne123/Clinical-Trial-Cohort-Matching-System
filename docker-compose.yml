@@ -1,63 +1,68 @@
+version: "3.9"
+
 services:
-  trial_postgres:
-    image: postgres:16-alpine
-    env_file: .env
+  api:
+    build: .
+    ports:
+      - "8000:8000"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      - DATABASE_URL=postgresql://trialmatch:changeme@postgres:5432/trial_db
+      - API_KEY=${API_KEY:-}
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
     ports:
       - "5432:5432"
+    environment:
+      - POSTGRES_USER=trialmatch
+      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_DB=trial_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./metabase_setup.sql:/docker-entrypoint-initdb.d/01_metabase.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U trialmatch -d trial_db"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - trial_network
-
-  trial_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    env_file: .env
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@trial_postgres:5432/${POSTGRES_DB}
-    depends_on:
-      trial_postgres:
-        condition: service_healthy
-    volumes:
-      - ./src:/app/src
-    networks:
-      - trial_network
+    restart: unless-stopped
 
   metabase:
     image: metabase/metabase:latest
     ports:
       - "3000:3000"
     environment:
-      MB_DB_TYPE: postgres
-      MB_DB_DBNAME: metabase
-      MB_DB_HOST: trial_postgres
-      MB_DB_PORT: 5432
-      MB_DB_USER: ${POSTGRES_USER}
-      MB_DB_PASS: ${POSTGRES_PASSWORD}
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=metabase
+      - MB_DB_PORT=5432
+      - MB_DB_USER=trialmatch
+      - MB_DB_PASS=changeme
+      - MB_DB_HOST=postgres
     depends_on:
-      trial_postgres:
+      postgres:
         condition: service_healthy
-    volumes:
-      - metabase_data:/metabase-data
-    networks:
-      - trial_network
+    restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped
 
 volumes:
   postgres_data:
-  metabase_data:
-
-networks:
-  trial_network:
-    driver: bridge
