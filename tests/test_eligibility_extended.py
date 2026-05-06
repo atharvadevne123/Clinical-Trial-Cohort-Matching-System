@@ -55,7 +55,7 @@ def test_multiple_exclusion_violations_reduces_score(matcher):
     }
     result = matcher.check_match(patient, trial)
     assert result["eligible"] is False
-    assert len(result["violated_criteria"]) == 2
+    assert len(result["violated_exclusion"]) == 2
 
 
 def test_medication_code_lookup(matcher):
