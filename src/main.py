@@ -1,21 +1,33 @@
-"""Clinical Trial Cohort Matching API"""
+"""Clinical Trial Cohort Matching API.
+
+FastAPI application providing patient-trial matching via rule-based eligibility
+evaluation and XGBoost ML enrollment prediction with NLP and FHIR integration.
+"""
 
 import os
 import logging
+import uuid
 from contextlib import asynccontextmanager
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
-from fastapi import FastAPI, Depends, HTTPException, Security, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
-from src.models import init_db, Patient, Trial, PatientTrialMatch, SessionLocal
-from src.schemas import PatientCreate, PatientResponse, TrialCreate, TrialResponse
+from src.models import Patient, PatientTrialMatch, SessionLocal, Trial, init_db
+from src.schemas import (
+    ClinicalNoteRequest,
+    PatientCreate,
+    PatientResponse,
+    TrialCreate,
+    TrialResponse,
+)
 from src.eligibility import matcher
 from src.nlp import nlp_processor
 from src.fhir import fhir_client
-from src.ml_prediction import predictor, EnrollmentPredictor, create_ml_router
+from src.ml_prediction import EnrollmentPredictor, predictor, create_ml_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,35 +36,56 @@ logger = logging.getLogger(__name__)
 # Auth
 # ------------------------------------------------------------------
 
-API_KEY = os.environ.get("API_KEY", "")  # empty = auth disabled (dev mode)
+API_KEY: str = os.environ.get("API_KEY", "")
 _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
+_START_TIME: datetime = datetime.now(timezone.utc)
 
-def require_api_key(key: Optional[str] = Security(_api_key_header)):
+
+def require_api_key(key: Optional[str] = Security(_api_key_header)) -> Optional[str]:
+    """Validate the X-API-Key header when API_KEY env var is set.
+
+    Args:
+        key: Value from the X-API-Key header, or None if absent.
+
+    Returns:
+        The validated key, or None in dev mode (API_KEY not set).
+
+    Raises:
+        HTTPException: 403 if API_KEY is set and the header does not match.
+    """
     if API_KEY and key != API_KEY:
         raise HTTPException(status_code=403, detail="Invalid or missing X-API-Key header")
     return key
 
 
 # ------------------------------------------------------------------
-# App
+# Lifespan
 # ------------------------------------------------------------------
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("Initialising database…")
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Initialise the database on startup."""
+    logger.info("Initialising database...")
     try:
         init_db()
         logger.info("Database ready.")
-    except Exception as e:
-        logger.error(f"Database init failed: {e}")
+    except Exception as exc:
+        logger.error("Database init failed: %s", exc)
         raise
     yield
 
 
+# ------------------------------------------------------------------
+# App
+# ------------------------------------------------------------------
+
 app = FastAPI(
     title="Clinical Trial Cohort Matching",
-    description="Match patients to clinical trials using rule-based eligibility and ML enrollment prediction.",
+    description=(
+        "Match patients to clinical trials using rule-based eligibility and "
+        "XGBoost ML enrollment prediction."
+    ),
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -65,14 +98,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def add_correlation_id(request: Request, call_next: Any) -> Response:
+    """Inject a unique X-Correlation-ID header into every response."""
+    correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
+    response = await call_next(request)
+    response.headers["X-Correlation-ID"] = correlation_id
+    return response
+
+
 app.include_router(create_ml_router())
+
 
 # ------------------------------------------------------------------
 # DB dependency
 # ------------------------------------------------------------------
 
-
-def get_db():
+def get_db() -> Session:
+    """Yield a database session and ensure it is closed after the request."""
     db = SessionLocal()
     try:
         yield db
@@ -84,27 +128,63 @@ def get_db():
 # Health / meta
 # ------------------------------------------------------------------
 
-
 @app.get("/", tags=["Meta"])
-def root():
+def root() -> Dict[str, str]:
+    """Return API name and version metadata."""
     return {"message": "Clinical Trial Cohort Matching API", "version": "1.0.0", "docs": "/docs"}
 
 
 @app.get("/health", tags=["Meta"])
-def health_check():
+def health_check() -> Dict[str, str]:
+    """Liveness probe — always returns healthy when the process is running."""
     return {"status": "healthy"}
 
 
+@app.get("/healthz", tags=["Meta"])
+def healthz() -> Dict[str, str]:
+    """Kubernetes-style liveness probe endpoint."""
+    return {"status": "ok"}
+
+
+@app.get("/version", tags=["Meta"])
+def version() -> Dict[str, Any]:
+    """Return API version and build metadata."""
+    return {
+        "version": "1.0.0",
+        "api": "Clinical Trial Cohort Matching",
+        "python_version": __import__("sys").version,
+        "started_at": _START_TIME.isoformat(),
+    }
+
+
 @app.get("/status", tags=["Meta"])
-def status(db: Session = Depends(get_db)):
-    patient_count = db.query(Patient).count()
-    trial_count = db.query(Trial).count()
-    match_count = db.query(PatientTrialMatch).count()
+def status(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Return live record counts for patients, trials, and matches."""
     return {
         "api": "running",
-        "patients": patient_count,
-        "trials": trial_count,
-        "matches": match_count,
+        "patients": db.query(Patient).count(),
+        "trials": db.query(Trial).count(),
+        "matches": db.query(PatientTrialMatch).count(),
+    }
+
+
+@app.get("/metrics", tags=["Meta"])
+def metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Return runtime statistics including record counts and uptime."""
+    uptime_seconds = (datetime.now(timezone.utc) - _START_TIME).total_seconds()
+    eligible = db.query(PatientTrialMatch).filter(
+        PatientTrialMatch.match_status == "ELIGIBLE"
+    ).count()
+    enrolled = db.query(PatientTrialMatch).filter(
+        PatientTrialMatch.enrolled == True  # noqa: E712
+    ).count()
+    return {
+        "uptime_seconds": round(uptime_seconds, 1),
+        "patients": db.query(Patient).count(),
+        "trials": db.query(Trial).count(),
+        "total_matches": db.query(PatientTrialMatch).count(),
+        "eligible_matches": eligible,
+        "enrolled_patients": enrolled,
     }
 
 
@@ -112,9 +192,18 @@ def status(db: Session = Depends(get_db)):
 # Patients
 # ------------------------------------------------------------------
 
+@app.post("/patients", response_model=PatientResponse, tags=["Patients"],
+          dependencies=[Depends(require_api_key)])
+def create_patient(patient: PatientCreate, db: Session = Depends(get_db)) -> Patient:
+    """Create a new patient record.
 
-@app.post("/patients", response_model=PatientResponse, tags=["Patients"], dependencies=[Depends(require_api_key)])
-def create_patient(patient: PatientCreate, db: Session = Depends(get_db)):
+    Args:
+        patient: Validated PatientCreate payload.
+        db: Database session (injected).
+
+    Raises:
+        HTTPException: 409 if a patient with the same ID already exists.
+    """
     if db.query(Patient).filter(Patient.id == patient.id).first():
         raise HTTPException(status_code=409, detail="Patient already exists")
 
@@ -134,23 +223,30 @@ def create_patient(patient: PatientCreate, db: Session = Depends(get_db)):
     db.add(db_patient)
     db.commit()
     db.refresh(db_patient)
+    logger.info("Created patient %s", db_patient.id)
     return db_patient
 
 
 @app.get("/patients/{patient_id}", response_model=PatientResponse, tags=["Patients"])
-def get_patient(patient_id: str, db: Session = Depends(get_db)):
+def get_patient(patient_id: str, db: Session = Depends(get_db)) -> Patient:
+    """Retrieve a patient record by ID.
+
+    Raises:
+        HTTPException: 404 if the patient is not found.
+    """
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
     return patient
 
 
-@app.get("/patients", response_model=list[PatientResponse], tags=["Patients"])
+@app.get("/patients", response_model=List[PatientResponse], tags=["Patients"])
 def list_patients(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
-):
+) -> List[Patient]:
+    """List patients with pagination."""
     return db.query(Patient).offset(skip).limit(limit).all()
 
 
@@ -158,9 +254,14 @@ def list_patients(
 # Trials
 # ------------------------------------------------------------------
 
+@app.post("/trials", response_model=TrialResponse, tags=["Trials"],
+          dependencies=[Depends(require_api_key)])
+def create_trial(trial: TrialCreate, db: Session = Depends(get_db)) -> Trial:
+    """Create a new clinical trial record.
 
-@app.post("/trials", response_model=TrialResponse, tags=["Trials"], dependencies=[Depends(require_api_key)])
-def create_trial(trial: TrialCreate, db: Session = Depends(get_db)):
+    Raises:
+        HTTPException: 409 if a trial with the same ID already exists.
+    """
     if db.query(Trial).filter(Trial.id == trial.id).first():
         raise HTTPException(status_code=409, detail="Trial already exists")
 
@@ -180,23 +281,30 @@ def create_trial(trial: TrialCreate, db: Session = Depends(get_db)):
     db.add(db_trial)
     db.commit()
     db.refresh(db_trial)
+    logger.info("Created trial %s", db_trial.id)
     return db_trial
 
 
 @app.get("/trials/{trial_id}", response_model=TrialResponse, tags=["Trials"])
-def get_trial(trial_id: str, db: Session = Depends(get_db)):
+def get_trial(trial_id: str, db: Session = Depends(get_db)) -> Trial:
+    """Retrieve a trial record by ID.
+
+    Raises:
+        HTTPException: 404 if the trial is not found.
+    """
     trial = db.query(Trial).filter(Trial.id == trial_id).first()
     if not trial:
         raise HTTPException(status_code=404, detail="Trial not found")
     return trial
 
 
-@app.get("/trials", response_model=list[TrialResponse], tags=["Trials"])
+@app.get("/trials", response_model=List[TrialResponse], tags=["Trials"])
 def list_trials(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
-):
+) -> List[Trial]:
+    """List trials with pagination."""
     return db.query(Trial).offset(skip).limit(limit).all()
 
 
@@ -204,10 +312,32 @@ def list_trials(
 # Eligibility matching (rule-based + ML)
 # ------------------------------------------------------------------
 
+def _compute_combined_score(rule_score: float, ml_score: float) -> float:
+    """Compute the weighted blend of rule-based and ML match scores.
 
-@app.post("/match/{patient_id}/{trial_id}", tags=["Matching"], dependencies=[Depends(require_api_key)])
-def check_match(patient_id: str, trial_id: str, db: Session = Depends(get_db)):
-    # Prevent duplicate match records
+    Args:
+        rule_score: Rule-based eligibility score (0–100).
+        ml_score: ML enrollment probability score (0–100).
+
+    Returns:
+        Combined score (0–100) as 50% rule + 50% ML.
+    """
+    return round(0.5 * rule_score + 0.5 * ml_score, 2)
+
+
+@app.post("/match/{patient_id}/{trial_id}", tags=["Matching"],
+          dependencies=[Depends(require_api_key)])
+def check_match(
+    patient_id: str, trial_id: str, db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Run rule-based and ML matching for a patient-trial pair.
+
+    Creates a PatientTrialMatch record and returns the combined result.
+
+    Raises:
+        HTTPException: 409 if a match record already exists.
+        HTTPException: 404 if patient or trial is not found.
+    """
     existing = db.query(PatientTrialMatch).filter(
         PatientTrialMatch.patient_id == patient_id,
         PatientTrialMatch.trial_id == trial_id,
@@ -223,7 +353,7 @@ def check_match(patient_id: str, trial_id: str, db: Session = Depends(get_db)):
     if not trial:
         raise HTTPException(status_code=404, detail="Trial not found")
 
-    patient_dict = {
+    patient_dict: Dict[str, Any] = {
         "id": patient.id,
         "first_name": patient.first_name,
         "last_name": patient.last_name,
@@ -232,22 +362,19 @@ def check_match(patient_id: str, trial_id: str, db: Session = Depends(get_db)):
         "conditions": patient.conditions or [],
         "medications": patient.medications or [],
     }
-    trial_dict = {
+    trial_dict: Dict[str, Any] = {
         "id": trial.id,
         "inclusion_criteria": trial.inclusion_criteria or [],
         "exclusion_criteria": trial.exclusion_criteria or [],
     }
 
-    # Rule-based eligibility
     rule_result = matcher.check_match(patient_dict, trial_dict)
-
-    # ML enrollment prediction
     features = EnrollmentPredictor._dict_to_features(patient_dict)
     ml_result = predictor.predict(features, patient_id, trial_id)
 
-    rule_score = float(rule_result["match_score"])          # 0–100
-    ml_score = ml_result.enrollment_probability * 100       # 0–100
-    combined = round(0.5 * rule_score + 0.5 * ml_score, 2)
+    rule_score = float(rule_result["match_score"])
+    ml_score = ml_result.enrollment_probability * 100
+    combined = _compute_combined_score(rule_score, ml_score)
 
     match = PatientTrialMatch(
         patient_id=patient_id,
@@ -289,7 +416,8 @@ def get_trial_matches(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
-):
+) -> Dict[str, Any]:
+    """Return all match records for a trial with optional status filter."""
     if not db.query(Trial).filter(Trial.id == trial_id).first():
         raise HTTPException(status_code=404, detail="Trial not found")
 
@@ -314,7 +442,8 @@ def get_trial_matches(
 
 
 @app.get("/patients/{patient_id}/matches", tags=["Matching"])
-def get_patient_matches(patient_id: str, db: Session = Depends(get_db)):
+def get_patient_matches(patient_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Return all match records for a patient, sorted by combined score descending."""
     if not db.query(Patient).filter(Patient.id == patient_id).first():
         raise HTTPException(status_code=404, detail="Patient not found")
     matches = (
@@ -330,16 +459,9 @@ def get_patient_matches(patient_id: str, db: Session = Depends(get_db)):
 # NLP
 # ------------------------------------------------------------------
 
-
-from pydantic import BaseModel
-
-
-class ClinicalNoteRequest(BaseModel):
-    text: str
-
-
 @app.post("/nlp/extract-entities", tags=["NLP"])
-def extract_clinical_entities(request: ClinicalNoteRequest):
+def extract_clinical_entities(request: ClinicalNoteRequest) -> Dict[str, Any]:
+    """Extract clinical entities (conditions, medications, symptoms) from free text."""
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
     entities = nlp_processor.extract_entities(request.text)
@@ -353,7 +475,8 @@ def extract_clinical_entities(request: ClinicalNoteRequest):
 
 
 @app.post("/nlp/clinical-profile", tags=["NLP"])
-def generate_clinical_profile(request: ClinicalNoteRequest):
+def generate_clinical_profile(request: ClinicalNoteRequest) -> Dict[str, Any]:
+    """Generate a structured clinical profile summary from free text."""
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
     return {
@@ -362,8 +485,12 @@ def generate_clinical_profile(request: ClinicalNoteRequest):
     }
 
 
-@app.post("/patients/{patient_id}/analyze-notes", tags=["NLP"], dependencies=[Depends(require_api_key)])
-def analyze_patient_notes(patient_id: str, request: ClinicalNoteRequest, db: Session = Depends(get_db)):
+@app.post("/patients/{patient_id}/analyze-notes", tags=["NLP"],
+          dependencies=[Depends(require_api_key)])
+def analyze_patient_notes(
+    patient_id: str, request: ClinicalNoteRequest, db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Extract clinical entities from notes and update the patient record."""
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
@@ -391,10 +518,12 @@ def analyze_patient_notes(patient_id: str, request: ClinicalNoteRequest, db: Ses
 # FHIR import
 # ------------------------------------------------------------------
 
-
-@app.post("/fhir/import/{fhir_patient_id}", tags=["FHIR"], dependencies=[Depends(require_api_key)])
-def import_fhir_patient(fhir_patient_id: str, db: Session = Depends(get_db)):
-    """Fetch a patient from the FHIR server and upsert into the local DB."""
+@app.post("/fhir/import/{fhir_patient_id}", tags=["FHIR"],
+          dependencies=[Depends(require_api_key)])
+def import_fhir_patient(
+    fhir_patient_id: str, db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Fetch a patient from the FHIR server and upsert into the local database."""
     profile = fhir_client.fetch_complete_patient_profile(fhir_patient_id)
 
     patient = db.query(Patient).filter(Patient.id == fhir_patient_id).first()
@@ -402,7 +531,6 @@ def import_fhir_patient(fhir_patient_id: str, db: Session = Depends(get_db)):
         patient.conditions = profile.get("conditions", [])
         patient.medications = profile.get("medications", [])
     else:
-        from datetime import datetime
         dob_str = profile.get("date_of_birth")
         dob = datetime.fromisoformat(dob_str) if dob_str else None
         patient = Patient(
@@ -421,6 +549,7 @@ def import_fhir_patient(fhir_patient_id: str, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(patient)
+    logger.info("FHIR import complete for patient %s", fhir_patient_id)
     return {"imported": True, "patient_id": patient.id, "profile": profile}
 
 
@@ -428,13 +557,12 @@ def import_fhir_patient(fhir_patient_id: str, db: Session = Depends(get_db)):
 # Recruitment
 # ------------------------------------------------------------------
 
-
 @app.get("/recruitment/candidates/{trial_id}", tags=["Recruitment"])
 async def get_recruitment_candidates(
     trial_id: str,
     threshold: float = Query(0.5, ge=0.0, le=1.0, description="Minimum enrollment probability"),
     db: Session = Depends(get_db),
-):
+) -> Dict[str, Any]:
     """Score all un-enrolled patients against a trial and return ranked candidates."""
     if not db.query(Trial).filter(Trial.id == trial_id).first():
         raise HTTPException(status_code=404, detail="Trial not found")
@@ -449,12 +577,13 @@ async def get_recruitment_candidates(
     }
 
 
-@app.post("/recruitment/notify/{patient_id}/{trial_id}", tags=["Recruitment"], dependencies=[Depends(require_api_key)])
+@app.post("/recruitment/notify/{patient_id}/{trial_id}", tags=["Recruitment"],
+          dependencies=[Depends(require_api_key)])
 async def send_recruitment_notification(
     patient_id: str,
     trial_id: str,
     db: Session = Depends(get_db),
-):
+) -> Dict[str, Any]:
     """Send a recruitment email to a single patient for a given trial."""
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
@@ -493,9 +622,8 @@ async def send_recruitment_notification(
 # Admin — seed endpoint
 # ------------------------------------------------------------------
 
-
 @app.post("/admin/seed", tags=["Admin"], dependencies=[Depends(require_api_key)])
-def seed_database(db: Session = Depends(get_db)):
+def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Populate the database with synthetic patients, trials, and matches."""
     from src.seed_data import run_seed
     stats = run_seed(db)
