@@ -1,20 +1,36 @@
-"""Recruitment Engine — score candidates and dispatch outreach emails."""
+"""Recruitment Engine — score candidates and dispatch outreach emails.
+
+Provides async patient scoring against ML enrollment predictions and
+SMTP-based outreach email dispatch for clinical trial recruitment.
+"""
 
 import asyncio
 import logging
+import os
 import smtplib
 from datetime import datetime, timezone
 from email.mime.text import MIMEText
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from src.models import Patient, Trial, PatientTrialMatch, SessionLocal
-from src.ml_prediction import predictor, EnrollmentPredictor
+from src.models import Patient, PatientTrialMatch, SessionLocal, Trial
+from src.ml_prediction import EnrollmentPredictor, predictor
 
 logger = logging.getLogger(__name__)
 
+_SMTP_HOST: str = os.environ.get("SMTP_HOST", "localhost")
+_SMTP_PORT: int = int(os.environ.get("SMTP_PORT", "1025"))
+_SMTP_FROM: str = os.environ.get("SMTP_FROM", "noreply@trial.local")
+
 
 def _patient_to_dict(p: Patient) -> Dict[str, Any]:
-    """Convert a Patient ORM object to the dict format expected by the predictor."""
+    """Convert a Patient ORM object to the dict format expected by the predictor.
+
+    Args:
+        p: SQLAlchemy Patient model instance.
+
+    Returns:
+        Dict with id, date_of_birth, gender, conditions, and medications.
+    """
     return {
         "id": str(p.id),
         "date_of_birth": p.date_of_birth,
@@ -25,29 +41,47 @@ def _patient_to_dict(p: Patient) -> Dict[str, Any]:
 
 
 class RecruitmentEngine:
-    def __init__(self, smtp_host: str = "localhost", smtp_port: int = 1025):
+    """Engine that scores eligible patients and sends recruitment outreach emails.
+
+    Attributes:
+        smtp_host: SMTP server hostname (default from SMTP_HOST env var).
+        smtp_port: SMTP server port (default from SMTP_PORT env var).
+    """
+
+    def __init__(
+        self,
+        smtp_host: str = _SMTP_HOST,
+        smtp_port: int = _SMTP_PORT,
+    ) -> None:
         self.smtp_host = smtp_host
         self.smtp_port = smtp_port
 
     async def score_eligible_patients(
         self, trial_id: str, threshold: float = 0.5
     ) -> List[Dict[str, Any]]:
-        """Return patients above the enrollment probability threshold, sorted by score."""
+        """Score all un-enrolled patients against a trial and return above-threshold candidates.
+
+        Args:
+            trial_id: ID of the trial to score against.
+            threshold: Minimum enrollment_probability (0.0–1.0) to include a candidate.
+
+        Returns:
+            List of candidate dicts sorted by score descending.
+        """
         with SessionLocal() as db:
             trial = db.query(Trial).filter(Trial.id == trial_id).first()
             if not trial:
-                logger.warning(f"Trial {trial_id} not found.")
+                logger.warning("Trial %s not found.", trial_id)
                 return []
 
             patients = db.query(Patient).all()
             scored: List[Dict[str, Any]] = []
 
             for p in patients:
-                # Skip patients already enrolled in this trial
                 already_enrolled = db.query(PatientTrialMatch).filter(
                     PatientTrialMatch.patient_id == p.id,
                     PatientTrialMatch.trial_id == trial_id,
-                    PatientTrialMatch.enrolled == True,
+                    PatientTrialMatch.enrolled == True,  # noqa: E712
                 ).first()
                 if already_enrolled:
                     continue
@@ -70,7 +104,15 @@ class RecruitmentEngine:
         return sorted(scored, key=lambda x: x["score"], reverse=True)
 
     def send_recruitment_email(self, candidate: Dict[str, Any]) -> bool:
-        """Send a recruitment email to a candidate. Returns True on success."""
+        """Send a recruitment invitation email to a single candidate.
+
+        Args:
+            candidate: Dict with patient_id, patient_name, email, score,
+                confidence, recommendation, trial_id, and trial_name.
+
+        Returns:
+            True if the email was sent successfully, False otherwise.
+        """
         subject = f"Invitation: {candidate['trial_name']} Clinical Trial"
         body = (
             f"Dear {candidate['patient_name']},\n\n"
@@ -86,14 +128,14 @@ class RecruitmentEngine:
         try:
             msg = MIMEText(body)
             msg["Subject"] = subject
-            msg["From"] = "noreply@trial.local"
+            msg["From"] = _SMTP_FROM
             msg["To"] = candidate["email"]
             with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=5) as server:
                 server.send_message(msg)
-            logger.info(f"Recruitment email sent to {candidate['patient_id']}")
+            logger.info("Recruitment email sent to patient %s", candidate["patient_id"])
             return True
-        except Exception as e:
-            logger.warning(f"Email failed for {candidate['patient_id']}: {e}")
+        except Exception as exc:
+            logger.warning("Email failed for patient %s: %s", candidate["patient_id"], exc)
             return False
 
     async def run_recruitment_batch(
@@ -103,7 +145,17 @@ class RecruitmentEngine:
         max_recruits: int = 10,
         dry_run: bool = False,
     ) -> Dict[str, Any]:
-        """Score patients, optionally send emails, and return a summary."""
+        """Score patients, optionally send emails, and return a summary report.
+
+        Args:
+            trial_id: ID of the trial to recruit for.
+            threshold: Minimum enrollment probability to include a candidate.
+            max_recruits: Maximum number of candidates to process.
+            dry_run: If True, score but do not send emails.
+
+        Returns:
+            Summary dict with trial_id, timestamp, counts, and per-candidate results.
+        """
         candidates = await self.score_eligible_patients(trial_id, threshold)
         candidates = candidates[:max_recruits]
 
@@ -139,10 +191,10 @@ class RecruitmentEngine:
 # CLI entry point
 # ------------------------------------------------------------------
 
-async def _main():
+async def _main() -> None:
+    """CLI entry point: dry-run recruitment batch for a demo trial."""
     logging.basicConfig(level=logging.INFO)
     engine = RecruitmentEngine()
-    # Dry run to show candidates without sending emails
     results = await engine.run_recruitment_batch(
         trial_id="TRIAL_AFIB_001",
         threshold=0.5,
