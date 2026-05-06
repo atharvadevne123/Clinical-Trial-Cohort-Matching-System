@@ -1,14 +1,18 @@
-"""Eligibility Matching Engine"""
+"""Eligibility Matching Engine for Clinical Trial Cohort Matching."""
 
-from typing import Dict, Any
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 
 class EligibilityMatcher:
-    """Engine for matching patients to clinical trial criteria."""
+    """Rule-based engine that evaluates patient eligibility against trial criteria.
 
-    def __init__(self):
-        self.operators = {
+    Supports operators: EQ, GT, LT, GTE, LTE, IN, EXISTS, NOT_EXISTS.
+    Field prefixes ``condition:`` and ``medication:`` allow ICD-10/ATC code lookups.
+    """
+
+    def __init__(self) -> None:
+        self.operators: Dict[str, Any] = {
             "EQ": self._eq,
             "GT": self._gt,
             "LT": self._lt,
@@ -20,36 +24,42 @@ class EligibilityMatcher:
         }
 
     def check_match(self, patient: Dict[str, Any], trial: Dict[str, Any]) -> Dict[str, Any]:
-        """Check if a patient meets all trial criteria."""
-        matched_inclusion = []
-        violated_exclusion = []
-        reasons = []
+        """Evaluate all inclusion and exclusion criteria for a patient-trial pair.
 
-        inclusion_criteria = trial.get("inclusion_criteria", [])
+        Args:
+            patient: Patient record dict with id, conditions, medications, gender, etc.
+            trial: Trial record dict with inclusion_criteria and exclusion_criteria lists.
+
+        Returns:
+            Dict with keys: eligible, match_score, matched_inclusion,
+            violated_exclusion, reasons.
+        """
+        matched_inclusion: List[Dict[str, Any]] = []
+        violated_exclusion: List[Dict[str, Any]] = []
+        reasons: List[str] = []
+
+        inclusion_criteria: List[Dict[str, Any]] = trial.get("inclusion_criteria", [])
         for criterion in inclusion_criteria:
             if self._evaluate_criterion(patient, criterion):
                 matched_inclusion.append(criterion)
 
-        exclusion_criteria = trial.get("exclusion_criteria", [])
+        exclusion_criteria: List[Dict[str, Any]] = trial.get("exclusion_criteria", [])
         for criterion in exclusion_criteria:
             if self._evaluate_criterion(patient, criterion):
                 violated_exclusion.append(criterion)
 
-        # Inclusion score: fraction of criteria met (0–100)
-        inclusion_score = (
+        inclusion_score: float = (
             len(matched_inclusion) / len(inclusion_criteria) * 100
-            if inclusion_criteria else 100
+            if inclusion_criteria else 100.0
         )
-        # Exclusion score: penalise any violated criteria
-        exclusion_score = (
+        exclusion_score: float = (
             (1 - len(violated_exclusion) / len(exclusion_criteria)) * 100
-            if exclusion_criteria else 100
+            if exclusion_criteria else 100.0
         )
 
-        match_score = round((inclusion_score * 0.7) + (exclusion_score * 0.3), 1)
+        match_score: float = round((inclusion_score * 0.7) + (exclusion_score * 0.3), 1)
 
-        # ALL inclusion criteria must be met; NO exclusion criteria may be triggered
-        is_eligible = (
+        is_eligible: bool = (
             len(matched_inclusion) == len(inclusion_criteria)
         ) and len(violated_exclusion) == 0
 
@@ -77,9 +87,18 @@ class EligibilityMatcher:
         }
 
     def _evaluate_criterion(self, patient: Dict[str, Any], criterion: Dict[str, Any]) -> bool:
-        field = criterion.get("field")
-        operator = criterion.get("operator", "EXISTS")
-        value = criterion.get("value")
+        """Evaluate a single criterion against a patient record.
+
+        Args:
+            patient: Patient record dict.
+            criterion: Criterion dict with field, operator, and value keys.
+
+        Returns:
+            True if the criterion is satisfied.
+        """
+        field: Optional[str] = criterion.get("field")
+        operator: str = criterion.get("operator", "EXISTS")
+        value: Any = criterion.get("value")
 
         if not field or operator not in self.operators:
             return False
@@ -88,50 +107,104 @@ class EligibilityMatcher:
         return self.operators[operator](patient_value, value)
 
     def _get_patient_field(self, patient: Dict[str, Any], field: str) -> Any:
-        # Check prefixed fields FIRST — before the dot check, because ICD-10
-        # codes like "I48.91" contain dots which would otherwise trigger the
-        # nested-path branch and silently return None.
+        """Extract a field value from a patient record, supporting special prefixes.
+
+        Handles ``age`` (computed from date_of_birth), ``condition:<code>``,
+        ``medication:<code>``, and dot-separated nested paths.
+
+        Args:
+            patient: Patient record dict.
+            field: Field name or prefixed field identifier.
+
+        Returns:
+            The extracted field value, or None if not found.
+        """
         if field == "age":
-            dob = patient.get("date_of_birth")
-            if dob:
-                if isinstance(dob, str):
-                    dob = datetime.fromisoformat(dob.replace("Z", "+00:00"))
-                now = datetime.now(dob.tzinfo) if dob.tzinfo else datetime.now()
-                return (now - dob).days // 365
-            return None
+            return self._calculate_age(patient)
 
         if field.startswith("condition:"):
             code = field[len("condition:"):]
-            for cond in patient.get("conditions", []) or []:
-                if isinstance(cond, dict):
-                    if cond.get("code") == code or cond.get("icd10_code") == code:
-                        return code
-                elif str(cond) == code:
-                    return code
-            return None
+            return self._find_condition_code(patient, code)
 
         if field.startswith("medication:"):
             code = field[len("medication:"):]
-            for med in patient.get("medications", []) or []:
-                if isinstance(med, dict):
-                    if med.get("code") == code or med.get("medication_code") == code:
-                        return code
-                elif str(med) == code:
-                    return code
-            return None
+            return self._find_medication_code(patient, code)
 
-        # Generic nested-path lookup (e.g. "address.city") — safe now that
-        # condition:/medication: prefixes are already handled above.
         if "." in field:
-            value = patient
-            for part in field.split("."):
-                if isinstance(value, dict):
-                    value = value.get(part)
-                else:
-                    return None
-            return value
+            return self._nested_get(patient, field)
 
         return patient.get(field)
+
+    def _calculate_age(self, patient: Dict[str, Any]) -> Optional[int]:
+        """Compute patient age in years from date_of_birth.
+
+        Args:
+            patient: Patient record dict containing date_of_birth.
+
+        Returns:
+            Age in whole years, or None if date_of_birth is absent.
+        """
+        dob = patient.get("date_of_birth")
+        if not dob:
+            return None
+        if isinstance(dob, str):
+            dob = datetime.fromisoformat(dob.replace("Z", "+00:00"))
+        now = datetime.now(dob.tzinfo) if dob.tzinfo else datetime.now()
+        return (now - dob).days // 365
+
+    def _find_condition_code(self, patient: Dict[str, Any], code: str) -> Optional[str]:
+        """Look up an ICD-10 code in the patient's conditions list.
+
+        Args:
+            patient: Patient record dict.
+            code: ICD-10 code to search for.
+
+        Returns:
+            The code string if found, otherwise None.
+        """
+        for cond in patient.get("conditions", []) or []:
+            if isinstance(cond, dict):
+                if cond.get("code") == code or cond.get("icd10_code") == code:
+                    return code
+            elif str(cond) == code:
+                return code
+        return None
+
+    def _find_medication_code(self, patient: Dict[str, Any], code: str) -> Optional[str]:
+        """Look up an ATC/medication code in the patient's medications list.
+
+        Args:
+            patient: Patient record dict.
+            code: Medication code to search for.
+
+        Returns:
+            The code string if found, otherwise None.
+        """
+        for med in patient.get("medications", []) or []:
+            if isinstance(med, dict):
+                if med.get("code") == code or med.get("medication_code") == code:
+                    return code
+            elif str(med) == code:
+                return code
+        return None
+
+    def _nested_get(self, obj: Dict[str, Any], path: str) -> Any:
+        """Traverse a dot-separated path in a nested dict.
+
+        Args:
+            obj: Root dict to traverse.
+            path: Dot-separated key path (e.g. "address.city").
+
+        Returns:
+            The value at the path, or None if any key is missing.
+        """
+        value: Any = obj
+        for part in path.split("."):
+            if isinstance(value, dict):
+                value = value.get(part)
+            else:
+                return None
+        return value
 
     # --- comparison helpers ---
 
