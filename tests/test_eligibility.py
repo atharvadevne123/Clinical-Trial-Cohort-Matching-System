@@ -48,7 +48,7 @@ def test_exclusion_criterion_makes_patient_ineligible(matcher, basic_patient):
     }
     result = matcher.check_match(basic_patient, trial)
     assert result["eligible"] is False
-    assert len(result["violated_criteria"]) > 0
+    assert len(result["violated_exclusion"]) > 0
 
 
 def test_no_criteria_gives_full_score(matcher, basic_patient):
