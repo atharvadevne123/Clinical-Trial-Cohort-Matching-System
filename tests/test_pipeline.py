@@ -1,7 +1,8 @@
 """Tests for the retraining pipeline."""
-import pytest
+
 import numpy as np
-from unittest.mock import patch, MagicMock
+import pytest
+
 from pipelines.retrain_pipeline import RetrainingPipeline
 
 

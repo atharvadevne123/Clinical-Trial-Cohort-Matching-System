@@ -1,8 +1,7 @@
 """Tests for performance benchmark utilities."""
 import pytest
-from scripts.benchmark import (
-    time_function, benchmark_eligibility_matcher, benchmark_ml_predictor
-)
+
+from scripts.benchmark import benchmark_eligibility_matcher, benchmark_ml_predictor, time_function
 
 
 def test_time_function_basic():

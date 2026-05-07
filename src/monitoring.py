@@ -6,7 +6,7 @@ using the Kolmogorov-Smirnov test.
 
 import logging
 from collections import deque
-from typing import Deque, Dict, List, Optional, Tuple
+from typing import Deque, Dict, List, Optional
 
 import numpy as np
 

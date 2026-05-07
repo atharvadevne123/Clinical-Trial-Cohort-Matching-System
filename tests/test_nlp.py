@@ -1,5 +1,6 @@
 """Tests for the clinical NLP processor."""
 import pytest
+
 from src.nlp import ClinicalNLPProcessor
 
 

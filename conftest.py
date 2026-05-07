@@ -1,5 +1,6 @@
 """Root-level pytest configuration and shared fixtures."""
 import os
+
 import pytest
 
 # Set test database URL before any imports

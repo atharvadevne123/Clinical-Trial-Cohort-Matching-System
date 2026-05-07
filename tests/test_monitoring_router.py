@@ -1,11 +1,11 @@
 """Tests for monitoring router endpoints."""
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.models import Base
 from src.main import app, get_db
+from src.models import Base
+from src.monitoring_router import router as monitoring_router
 
 TEST_DB = "sqlite:///./test_monitoring_router.db"
 engine = create_engine(TEST_DB, connect_args={"check_same_thread": False})
@@ -22,9 +22,6 @@ def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
-
-# Register monitoring router
-from src.monitoring_router import router as monitoring_router
 app.include_router(monitoring_router)
 
 client = TestClient(app)

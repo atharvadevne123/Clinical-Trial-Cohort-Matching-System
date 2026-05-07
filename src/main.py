@@ -4,8 +4,8 @@ FastAPI application providing patient-trial matching via rule-based eligibility
 evaluation and XGBoost ML enrollment prediction with NLP and FHIR integration.
 """
 
-import os
 import logging
+import os
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -16,7 +16,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
+from src.eligibility import matcher
+from src.fhir import fhir_client
+from src.ml_prediction import EnrollmentPredictor, create_ml_router, predictor
 from src.models import Patient, PatientTrialMatch, SessionLocal, Trial, init_db
+from src.nlp import nlp_processor
 from src.schemas import (
     ClinicalNoteRequest,
     PatientCreate,
@@ -24,10 +28,6 @@ from src.schemas import (
     TrialCreate,
     TrialResponse,
 )
-from src.eligibility import matcher
-from src.nlp import nlp_processor
-from src.fhir import fhir_client
-from src.ml_prediction import EnrollmentPredictor, predictor, create_ml_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

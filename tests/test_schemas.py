@@ -1,8 +1,10 @@
 """Tests for Pydantic schemas."""
-import pytest
 from datetime import datetime
+
+import pytest
 from pydantic import ValidationError
-from src.schemas import PatientCreate, TrialCreate, PatientResponse, TrialResponse, MatchResponse
+
+from src.schemas import PatientCreate, TrialCreate
 
 
 def test_patient_create_valid():

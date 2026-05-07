@@ -1,7 +1,7 @@
 """Eligibility Matching Engine for Clinical Trial Cohort Matching."""
 
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 
 class EligibilityMatcher:

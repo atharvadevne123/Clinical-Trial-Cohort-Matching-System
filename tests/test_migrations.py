@@ -1,7 +1,8 @@
 """Tests for database migration runner."""
 import pytest
 from sqlalchemy import create_engine, text
-from scripts.migrate import apply_migrations, MIGRATIONS
+
+from scripts.migrate import MIGRATIONS, apply_migrations
 
 
 @pytest.fixture

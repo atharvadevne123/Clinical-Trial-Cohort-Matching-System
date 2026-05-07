@@ -7,7 +7,7 @@ the XGBoost enrollment model using recent prediction data from the database.
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import joblib
 import numpy as np
@@ -51,8 +51,8 @@ class RetrainingPipeline:
 
         try:
             import xgboost as xgb
-            from sklearn.model_selection import train_test_split
             from sklearn.metrics import roc_auc_score
+            from sklearn.model_selection import train_test_split
         except ImportError as exc:
             logger.error("Required package missing: %s", exc)
             return {"status": "error", "reason": str(exc)}

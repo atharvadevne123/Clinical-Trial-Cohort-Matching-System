@@ -5,7 +5,6 @@ severity inference, and symptom mapping for clinical free text.
 """
 
 import logging
-from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)

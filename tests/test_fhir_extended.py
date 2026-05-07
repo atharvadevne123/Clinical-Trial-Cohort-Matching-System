@@ -1,6 +1,7 @@
 """Extended FHIR client tests."""
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from src.fhir import FHIRClient
 
 

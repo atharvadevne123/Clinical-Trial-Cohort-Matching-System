@@ -12,8 +12,8 @@ from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from typing import Any, Dict, List
 
-from src.models import Patient, PatientTrialMatch, SessionLocal, Trial
 from src.ml_prediction import EnrollmentPredictor, predictor
+from src.models import Patient, PatientTrialMatch, SessionLocal, Trial
 
 logger = logging.getLogger(__name__)
 

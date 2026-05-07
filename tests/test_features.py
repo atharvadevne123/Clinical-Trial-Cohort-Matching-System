@@ -1,9 +1,12 @@
 """Tests for feature engineering pipeline."""
-import pytest
 import numpy as np
+import pytest
+
 from src.features import (
-    extract_condition_flags, compute_age, build_feature_vector,
-    ClinicalFeaturePipeline, CONDITION_FLAGS,
+    ClinicalFeaturePipeline,
+    build_feature_vector,
+    compute_age,
+    extract_condition_flags,
 )
 
 

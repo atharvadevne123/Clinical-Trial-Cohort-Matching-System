@@ -1,9 +1,12 @@
 """Extended ML prediction tests with parametrize."""
-import pytest
-import numpy as np
 from unittest.mock import patch
+
+import pytest
+
 from src.ml_prediction import (
-    EnrollmentPredictor, PatientFeatures, _generate_training_data, FEATURE_NAMES
+    EnrollmentPredictor,
+    PatientFeatures,
+    _generate_training_data,
 )
 
 

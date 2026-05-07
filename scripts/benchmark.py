@@ -6,9 +6,7 @@ the eligibility matcher and ML predictor under realistic loads.
 
 import logging
 import time
-from typing import Any, Dict, List, Tuple
-
-import numpy as np
+from typing import Any, Dict, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +89,7 @@ def benchmark_ml_predictor(n_patients: int = 100) -> Dict[str, Any]:
     Returns:
         Dict with total_predictions, total_seconds, predictions_per_second, mean_ms.
     """
-    from src.ml_prediction import predictor, EnrollmentPredictor
+    from src.ml_prediction import predictor
 
     patients = [
         {
@@ -105,7 +103,7 @@ def benchmark_ml_predictor(n_patients: int = 100) -> Dict[str, Any]:
     ]
 
     start = time.perf_counter()
-    results = predictor.predict_batch(patients, "BENCH_TRIAL")
+    predictor.predict_batch(patients, "BENCH_TRIAL")
     elapsed = time.perf_counter() - start
 
     throughput = n_patients / elapsed if elapsed > 0 else float("inf")

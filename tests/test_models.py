@@ -1,10 +1,10 @@
 """Tests for database models."""
+
 import pytest
-from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.models import Base, Patient, Trial, PatientTrialMatch, init_db, _now
+from src.models import Base, Patient, PatientTrialMatch, Trial, _now
 
 TEST_URL = "sqlite:///./test_models.db"
 engine = create_engine(TEST_URL, connect_args={"check_same_thread": False})

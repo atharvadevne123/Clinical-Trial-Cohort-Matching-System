@@ -1,10 +1,15 @@
 """Tests for ML enrollment prediction module."""
-import pytest
+from unittest.mock import patch
+
 import numpy as np
-from unittest.mock import patch, MagicMock
+import pytest
+
 from src.ml_prediction import (
-    EnrollmentPredictor, PatientFeatures, PredictionResult,
-    _generate_training_data, FEATURE_NAMES,
+    FEATURE_NAMES,
+    EnrollmentPredictor,
+    PatientFeatures,
+    PredictionResult,
+    _generate_training_data,
 )
 
 

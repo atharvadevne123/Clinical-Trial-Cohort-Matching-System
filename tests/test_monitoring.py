@@ -1,6 +1,7 @@
 """Tests for drift monitoring module."""
-import pytest
 import numpy as np
+import pytest
+
 from src.monitoring import PredictionMonitor
 
 

@@ -5,16 +5,14 @@ The unversioned paths remain available for backwards compatibility.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from src.models import Patient, PatientTrialMatch, SessionLocal, Trial
-from src.schemas import PatientCreate, PatientResponse, TrialCreate, TrialResponse
-from src.main import get_db, require_api_key
-from src.eligibility import matcher
-from src.ml_prediction import EnrollmentPredictor, predictor
+from src.main import get_db
+from src.models import Patient, PatientTrialMatch, Trial
+from src.schemas import PatientResponse, TrialResponse
 
 logger = logging.getLogger(__name__)
 

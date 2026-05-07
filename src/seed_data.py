@@ -19,9 +19,9 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
-from src.models import Patient, Trial, PatientTrialMatch, SessionLocal
 from src.eligibility import matcher
-from src.ml_prediction import predictor, EnrollmentPredictor
+from src.ml_prediction import EnrollmentPredictor, predictor
+from src.models import Patient, PatientTrialMatch, SessionLocal, Trial
 
 logger = logging.getLogger(__name__)
 
@@ -922,7 +922,6 @@ def run_seed(db: Session) -> dict:
 # ------------------------------------------------------------------
 
 if __name__ == "__main__":
-    import os
     from dotenv import load_dotenv
 
     load_dotenv()

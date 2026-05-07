@@ -4,6 +4,7 @@ import logging
 from typing import Any, Dict
 
 from fastapi import APIRouter
+
 from src.monitoring import monitor
 
 logger = logging.getLogger(__name__)

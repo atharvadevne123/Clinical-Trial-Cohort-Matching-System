@@ -1,8 +1,10 @@
 """Tests for the recruitment engine."""
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
-from src.recruitment import RecruitmentEngine, _patient_to_dict
+
 from src.models import Patient
+from src.recruitment import RecruitmentEngine, _patient_to_dict
 
 
 @pytest.fixture

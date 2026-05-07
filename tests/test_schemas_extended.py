@@ -1,8 +1,10 @@
 """Extended schema validation tests."""
-import pytest
 from datetime import datetime
+
+import pytest
 from pydantic import ValidationError
-from src.schemas import PatientCreate, TrialCreate, ClinicalNoteRequest
+
+from src.schemas import ClinicalNoteRequest, PatientCreate, TrialCreate
 
 
 def test_patient_gender_normalised_to_lowercase():

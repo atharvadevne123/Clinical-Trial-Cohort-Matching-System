@@ -1,6 +1,8 @@
 """Extended eligibility matcher edge-case tests."""
-import pytest
 from datetime import datetime, timezone
+
+import pytest
+
 from src.eligibility import EligibilityMatcher
 
 
@@ -74,7 +76,6 @@ def test_medication_code_lookup(matcher):
 
 
 def test_calculate_age_with_timezone_aware_dob(matcher):
-    from datetime import timezone
     patient = {
         "id": "P_TZ",
         "date_of_birth": datetime(1980, 6, 15, tzinfo=timezone.utc),

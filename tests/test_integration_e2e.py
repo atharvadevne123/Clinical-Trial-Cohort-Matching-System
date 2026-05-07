@@ -4,8 +4,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.models import Base, Patient, Trial
 from src.main import app, get_db
+from src.models import Base, Patient, Trial
 
 TEST_DB = "sqlite:///./test_integration.db"
 engine = create_engine(TEST_DB, connect_args={"check_same_thread": False})
