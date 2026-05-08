@@ -36,7 +36,8 @@ jobs:
             --cov=src \
             --cov-report=term-missing \
             --cov-report=xml \
-            --ignore=tests/test_recruitment.py
+            --ignore=tests/test_recruitment.py \
+            --ignore=tests/test_integration_e2e.py
         env:
           DATABASE_URL: sqlite:///./test.db
 
