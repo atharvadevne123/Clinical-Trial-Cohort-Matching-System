@@ -7,7 +7,7 @@ pydantic-settings==2.11.0
 xgboost>=2.1.4
 scikit-learn==1.6.1
 joblib>=1.5.3
-httpx>=0.25.0
+httpx>=0.28.1
 python-dotenv>=1.2.1
 scipy>=1.13.0
 numpy>=1.26.0
