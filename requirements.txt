@@ -10,4 +10,4 @@ joblib>=1.5.3
 httpx>=0.28.1
 python-dotenv>=1.2.1
 scipy>=1.13.1
-numpy>=1.26.0
+numpy>=2.0.2
