@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -74,6 +75,11 @@ class Patient(Base):
 
     matches = relationship("PatientTrialMatch", back_populates="patient", cascade="all, delete-orphan")
 
+    __table_args__ = (
+        Index("ix_patients_gender", "gender"),
+        Index("ix_patients_dob", "date_of_birth"),
+    )
+
 
 class Trial(Base):
     """ORM model representing a clinical trial.
@@ -117,6 +123,11 @@ class Trial(Base):
     updated_at: datetime = Column(DateTime(timezone=True), default=_now, onupdate=_now)
 
     matches = relationship("PatientTrialMatch", back_populates="trial", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("ix_trials_phase", "phase"),
+        Index("ix_trials_status", "status"),
+    )
 
 
 class PatientTrialMatch(Base):
