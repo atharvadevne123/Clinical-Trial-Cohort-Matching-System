@@ -5,6 +5,7 @@ using the Kolmogorov-Smirnov test.
 """
 
 import logging
+import os
 from collections import deque
 from typing import Deque, Dict, List, Optional
 
@@ -12,7 +13,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-_DRIFT_THRESHOLD: float = 0.05
+_DRIFT_THRESHOLD: float = float(os.environ.get("DRIFT_THRESHOLD", "0.05"))
 
 
 class PredictionMonitor:
