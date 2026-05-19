@@ -215,10 +215,11 @@ class EnrollmentPredictor:
             PredictionResult with probability, confidence, and key factors.
         """
         x = features.to_array().reshape(1, -1)
-        prob = (
-            float(self.model.predict_proba(x)[0][1])
-            if self.model else self._rule_based(features)
-        )
+        if self.model is not None:
+            prob = float(self.model.predict_proba(x)[0][1])
+        else:
+            logger.debug("Model not loaded; using rule-based fallback for %s", patient_id)
+            prob = self._rule_based(features)
         confidence = (
             "HIGH" if prob >= 0.75 or prob <= 0.25
             else "MEDIUM" if prob >= 0.60 or prob <= 0.40
