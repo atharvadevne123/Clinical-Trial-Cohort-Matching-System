@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-05-19
+
+### Added
+- `FHIR_TIMEOUT` env var controls FHIR HTTP client timeout (default 5.0s).
+- `DRIFT_THRESHOLD` env var controls KS-test p-value threshold (default 0.05).
+- `SMTP_TIMEOUT` env var controls SMTP connection timeout (default 5s).
+- `lru_cache(maxsize=512)` on `is_valid_icd10` and `is_valid_atc` validators.
+- Database indexes on `patients.gender`, `patients.date_of_birth`, `trials.phase`, and `trials.status`.
+- `__all__` exports to `monitoring`, `validators`, `features`, and `eligibility` modules.
+- Startup warning logged when `API_KEY` env var is not set.
+- API key authentication on all `/monitoring/*` endpoints.
+- `_NEGATION_WINDOW_CHARS` and `_SEVERITY_WINDOW_CHARS` constants extracted in `nlp.py`.
+- `_strip_timezone` helper and `DEFAULT_AGE` constant extracted in `features.py`.
+- `_INCLUSION_WEIGHT` and `_EXCLUSION_WEIGHT` constants extracted in `eligibility.py`.
+- `Field(...)` descriptions added to all `MatchResponse` schema fields.
+
+### Fixed
+- `MODEL_PATH` in `retrain_pipeline.py` resolved relative to `src/` correctly.
+- Bare `except Exception` replaced with specific `httpx` exception types in `fhir.py`.
+- ICD-10 regex extended to accept alphanumeric suffixes (e.g. `Z00.00A`).
+- Input type guard added to `_dict_to_features()` in `ml_prediction.py`.
+
+### Changed
+- `logger.warning` used instead of `logger.debug` for FHIR unreachable server messages.
+- `print()` calls replaced with `logger.info()` in `benchmark.py`, `seed_data.py`, and `retrain_pipeline.py`.
+- Email validator tightened to require `local@domain.tld` format.
+- PatientDict type alias added to `features.py` and `recruitment.py`.
+
+### Added (tests)
+- Extended test coverage: eligibility operators, validator cache, feature timezone, ML fallback,
+  FHIR fallback, monitoring threshold env var, NLP negation window, schema email/gender,
+  monitoring router API key, pipeline custom min_samples and MODEL_PATH.
+
+## [1.0.0] - 2024-01-01
+
 ### Added
 - Full test suite covering eligibility, ML prediction, NLP, FHIR, schemas, and API endpoints.
 - GitHub Actions CI workflow with ruff linting and pytest coverage.
