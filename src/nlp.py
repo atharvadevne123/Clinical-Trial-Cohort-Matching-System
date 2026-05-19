@@ -9,6 +9,12 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+_NEGATION_WINDOW_CHARS: int = 60
+"""Characters to scan before a keyword to detect negation phrases."""
+
+_SEVERITY_WINDOW_CHARS: int = 100
+"""Characters to scan around a keyword to detect severity markers."""
+
 _NEGATION_WORDS: List[str] = [
     "no ", "not ", "without ", "denies ", "denied ",
     "no history of ", "negative for ", "rules out ",
@@ -175,7 +181,7 @@ class ClinicalNLPProcessor:
         pos = text.find(keyword)
         if pos == -1:
             return False
-        window = text[max(0, pos - 60): pos]
+        window = text[max(0, pos - _NEGATION_WINDOW_CHARS): pos]
         return any(neg in window for neg in _NEGATION_WORDS)
 
     def _extract_severity(self, text: str, entity: str) -> Optional[str]:
@@ -191,7 +197,7 @@ class ClinicalNLPProcessor:
         pos = text.find(entity)
         if pos == -1:
             return None
-        context = text[max(0, pos - 100): pos + len(entity) + 100]
+        context = text[max(0, pos - _SEVERITY_WINDOW_CHARS): pos + len(entity) + _SEVERITY_WINDOW_CHARS]
         for word in self.severity_markers:
             if word in context:
                 return word
