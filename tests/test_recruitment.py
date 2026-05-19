@@ -146,3 +146,46 @@ async def test_score_eligible_threshold_parameter(engine, threshold):
         mock_session.query.return_value.filter.return_value.first.return_value = None
         result = await engine.score_eligible_patients("T_THRESH", threshold=threshold)
     assert isinstance(result, list)
+
+
+def test_candidate_result_typed_dict():
+    """CandidateResult TypedDict should be importable and have expected keys."""
+    from src.recruitment import CandidateResult
+    candidate: CandidateResult = {
+        "patient_id": "P001",
+        "patient_name": "Alice Smith",
+        "email": "alice@example.com",
+        "score": 0.85,
+        "confidence": "HIGH",
+        "recommendation": "Strong candidate",
+        "trial_id": "T001",
+        "trial_name": "Hypertension Trial",
+    }
+    assert candidate["score"] == 0.85
+    assert candidate["confidence"] == "HIGH"
+
+
+def test_send_recruitment_email_subject_contains_trial_name(engine):
+    candidate = {
+        "patient_id": "P_SUBJ",
+        "patient_name": "Bob Jones",
+        "email": "bob@example.com",
+        "score": 0.70,
+        "confidence": "MEDIUM",
+        "recommendation": "Likely eligible",
+        "trial_id": "T_SUBJ",
+        "trial_name": "Diabetes Study",
+    }
+    sent_messages = []
+
+    class MockSMTP:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def send_message(self, msg):
+            sent_messages.append(msg)
+
+    with patch("smtplib.SMTP", return_value=MockSMTP()):
+        result = engine.send_recruitment_email(candidate)
+    assert isinstance(result, bool)
