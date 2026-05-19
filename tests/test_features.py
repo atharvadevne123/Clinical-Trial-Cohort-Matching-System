@@ -132,3 +132,27 @@ def test_strip_timezone_exported():
     assert naive.tzinfo is None
     already_naive = datetime(2020, 1, 1)
     assert _strip_timezone(already_naive).tzinfo is None
+
+
+def test_features_all_exports():
+    """Key symbols should appear in __all__."""
+    from src.features import __all__ as exports
+    assert "compute_age" in exports
+    assert "build_feature_vector" in exports
+    assert "DEFAULT_AGE" in exports
+
+
+def test_default_age_constant():
+    from src.features import DEFAULT_AGE
+    assert DEFAULT_AGE == 50.0
+
+
+@pytest.mark.parametrize("condition_list,expected_flag,expected_value", [
+    ([{"code": "I10"}], "has_hypertension", 1),
+    ([{"code": "I48"}], "has_afib", 1),
+    ([], "has_diabetes", 0),
+    ([{"name": "heart failure"}], "has_heart_disease", 1),
+])
+def test_extract_condition_flags_extended(condition_list, expected_flag, expected_value):
+    flags = extract_condition_flags(condition_list)
+    assert flags[expected_flag] == expected_value
