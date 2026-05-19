@@ -235,3 +235,10 @@ class ClinicalNLPProcessor:
 
 
 nlp_processor = ClinicalNLPProcessor()
+
+__all__ = [
+    "ClinicalNLPProcessor",
+    "nlp_processor",
+    "_NEGATION_WINDOW_CHARS",
+    "_SEVERITY_WINDOW_CHARS",
+]
