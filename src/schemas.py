@@ -48,9 +48,12 @@ class PatientCreate(BaseModel):
     @field_validator("email")
     @classmethod
     def email_basic_format(cls, v: Optional[str]) -> Optional[str]:
-        """Ensure email contains an @ sign if provided."""
-        if v and "@" not in v:
-            raise ValueError("email must contain @")
+        """Ensure email has exactly one @ with non-empty local and domain parts."""
+        if v is None:
+            return v
+        parts = v.split("@")
+        if len(parts) != 2 or not parts[0] or not parts[1] or "." not in parts[1]:
+            raise ValueError("email must be a valid address (local@domain.tld)")
         return v
 
 
