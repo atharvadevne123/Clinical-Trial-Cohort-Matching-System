@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 _SMTP_HOST: str = os.environ.get("SMTP_HOST", "localhost")
 _SMTP_PORT: int = int(os.environ.get("SMTP_PORT", "1025"))
 _SMTP_FROM: str = os.environ.get("SMTP_FROM", "noreply@trial.local")
+_SMTP_TIMEOUT: int = int(os.environ.get("SMTP_TIMEOUT", "5"))
 
 
 def _patient_to_dict(p: Patient) -> Dict[str, Any]:
@@ -130,7 +131,7 @@ class RecruitmentEngine:
             msg["Subject"] = subject
             msg["From"] = _SMTP_FROM
             msg["To"] = candidate["email"]
-            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=5) as server:
+            with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=_SMTP_TIMEOUT) as server:
                 server.send_message(msg)
             logger.info("Recruitment email sent to patient %s", candidate["patient_id"])
             return True
