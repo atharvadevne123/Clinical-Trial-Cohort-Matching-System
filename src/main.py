@@ -318,6 +318,10 @@ def list_trials(
 # Eligibility matching (rule-based + ML)
 # ------------------------------------------------------------------
 
+_COMBINED_RULE_WEIGHT: float = 0.5
+_COMBINED_ML_WEIGHT: float = 0.5
+
+
 def _compute_combined_score(rule_score: float, ml_score: float) -> float:
     """Compute the weighted blend of rule-based and ML match scores.
 
@@ -328,7 +332,7 @@ def _compute_combined_score(rule_score: float, ml_score: float) -> float:
     Returns:
         Combined score (0–100) as 50% rule + 50% ML.
     """
-    return round(0.5 * rule_score + 0.5 * ml_score, 2)
+    return round(_COMBINED_RULE_WEIGHT * rule_score + _COMBINED_ML_WEIGHT * ml_score, 2)
 
 
 @app.post("/match/{patient_id}/{trial_id}", tags=["Matching"],
