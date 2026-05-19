@@ -163,3 +163,13 @@ class ClinicalNoteRequest(BaseModel):
     """Schema for NLP clinical note analysis requests."""
 
     text: str = Field(..., min_length=1, description="Clinical note text to analyse")
+
+
+__all__ = [
+    "PatientCreate",
+    "PatientResponse",
+    "TrialCreate",
+    "TrialResponse",
+    "MatchResponse",
+    "ClinicalNoteRequest",
+]
