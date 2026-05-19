@@ -50,8 +50,8 @@ class FHIRClient:
             resp = httpx.get(url, timeout=self.timeout)
             resp.raise_for_status()
             return resp.json()
-        except Exception:
-            logger.debug("FHIR server unreachable – returning mock Patient for %s", patient_id)
+        except (httpx.HTTPStatusError, httpx.RequestError):
+            logger.warning("FHIR server unreachable – returning mock Patient for %s", patient_id)
             return self._mock_patient(patient_id)
 
     def get_patient_conditions(self, patient_id: str) -> List[Dict[str, Any]]:
@@ -69,8 +69,8 @@ class FHIRClient:
             resp.raise_for_status()
             bundle = resp.json()
             return [entry["resource"] for entry in bundle.get("entry", [])]
-        except Exception:
-            logger.debug("FHIR server unreachable – returning mock Conditions for %s", patient_id)
+        except (httpx.HTTPStatusError, httpx.RequestError):
+            logger.warning("FHIR server unreachable – returning mock Conditions for %s", patient_id)
             return self._mock_conditions()
 
     def get_patient_medications(self, patient_id: str) -> List[Dict[str, Any]]:
@@ -88,8 +88,8 @@ class FHIRClient:
             resp.raise_for_status()
             bundle = resp.json()
             return [entry["resource"] for entry in bundle.get("entry", [])]
-        except Exception:
-            logger.debug("FHIR server unreachable – returning mock Medications for %s", patient_id)
+        except (httpx.HTTPStatusError, httpx.RequestError):
+            logger.warning("FHIR server unreachable – returning mock Medications for %s", patient_id)
             return self._mock_medications()
 
     # ------------------------------------------------------------------
