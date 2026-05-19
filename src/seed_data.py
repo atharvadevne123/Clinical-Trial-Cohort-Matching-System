@@ -930,6 +930,4 @@ if __name__ == "__main__":
     with SessionLocal() as db:
         stats = run_seed(db)
 
-    print("\nSeed complete:")
-    for k, v in stats.items():
-        print(f"  {k}: {v}")
+    logger.info("Seed complete: %s", stats)
