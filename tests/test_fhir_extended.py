@@ -83,3 +83,58 @@ def test_base_url_strips_trailing_slash():
 def test_mock_patient_id_matches(fhir, patient_id):
     mock = fhir._mock_patient(patient_id)
     assert mock["id"] == patient_id
+
+
+def test_get_patient_falls_back_to_mock_on_connection_error(fhir):
+    """get_patient should return mock data when FHIR server is unreachable."""
+    result = fhir.get_patient("pt-unreachable")
+    assert result["resourceType"] == "Patient"
+    assert "name" in result
+
+
+def test_get_patient_conditions_falls_back_to_mock(fhir):
+    """get_patient_conditions returns mock list when server unreachable."""
+    result = fhir.get_patient_conditions("pt-unreachable")
+    assert isinstance(result, list)
+    assert all(r["resourceType"] == "Condition" for r in result)
+
+
+def test_get_patient_medications_falls_back_to_mock(fhir):
+    """get_patient_medications returns mock list when server unreachable."""
+    result = fhir.get_patient_medications("pt-unreachable")
+    assert isinstance(result, list)
+    assert all(r["resourceType"] == "MedicationStatement" for r in result)
+
+
+def test_fetch_complete_profile_falls_back_gracefully(fhir):
+    """fetch_complete_patient_profile assembles a full profile from fallback data."""
+    profile = fhir.fetch_complete_patient_profile("pt-fallback")
+    assert "fhir_id" in profile
+    assert isinstance(profile["conditions"], list)
+    assert isinstance(profile["medications"], list)
+
+
+def test_parse_patient_missing_optional_fields(fhir):
+    """parse_patient should handle patients with minimal FHIR data."""
+    sparse_patient = {
+        "resourceType": "Patient",
+        "id": "pt-sparse",
+        "name": [{"given": ["Jane"], "family": "Doe"}],
+        "birthDate": "1990-01-01",
+        "gender": "female",
+    }
+    parsed = fhir.parse_patient(sparse_patient)
+    assert parsed["first_name"] == "Jane"
+    assert parsed["email"] is None
+    assert parsed["phone"] is None
+
+
+def test_parse_condition_missing_coding(fhir):
+    """parse_condition should handle conditions with empty coding list."""
+    fhir_cond = {
+        "resourceType": "Condition",
+        "code": {"coding": [], "text": "Unknown"},
+    }
+    parsed = fhir.parse_condition(fhir_cond)
+    assert parsed["icd10_code"] is None
+    assert parsed["display"] == "Unknown"
