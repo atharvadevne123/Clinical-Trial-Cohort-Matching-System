@@ -153,7 +153,7 @@ def test_fhir_timeout_configurable(monkeypatch):
 
 def test_fhir_client_uses_fhir_timeout_default():
     """FHIRClient default timeout should equal _FHIR_TIMEOUT."""
-    from src.fhir import FHIRClient, _FHIR_TIMEOUT
+    from src.fhir import _FHIR_TIMEOUT, FHIRClient
     client = FHIRClient()
     assert client.timeout == _FHIR_TIMEOUT
 

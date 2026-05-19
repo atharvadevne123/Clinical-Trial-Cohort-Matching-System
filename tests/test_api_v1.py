@@ -79,7 +79,6 @@ def test_v1_health_has_timestamp():
 
 
 def test_v1_create_and_get_patient():
-    from datetime import datetime
     payload = {
         "id": "V1_P001",
         "first_name": "V1",

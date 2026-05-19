@@ -126,6 +126,7 @@ def test_build_feature_vector_gender_case_insensitive():
 def test_strip_timezone_exported():
     """Verify _strip_timezone helper is accessible and works."""
     from datetime import datetime, timezone
+
     from src.features import _strip_timezone
     aware = datetime(2020, 1, 1, tzinfo=timezone.utc)
     naive = _strip_timezone(aware)

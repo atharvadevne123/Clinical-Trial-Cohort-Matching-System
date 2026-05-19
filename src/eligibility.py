@@ -3,7 +3,6 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-
 _INCLUSION_WEIGHT: float = 0.7
 _EXCLUSION_WEIGHT: float = 0.3
 
