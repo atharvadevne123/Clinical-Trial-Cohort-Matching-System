@@ -7,6 +7,7 @@ date ranges, and enrollment probability bounds.
 import logging
 import re
 from datetime import datetime
+from functools import lru_cache
 from typing import Any, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,7 @@ _ICD10_PATTERN = re.compile(r"^[A-Z][0-9]{2}(\.[A-Z0-9]{1,5})?$")
 _ATC_PATTERN = re.compile(r"^[A-Z][0-9]{2}[A-Z]{2}[0-9]{2}$")
 
 
+@lru_cache(maxsize=512)
 def is_valid_icd10(code: str) -> bool:
     """Check if a string matches the ICD-10 code format.
 
@@ -27,6 +29,7 @@ def is_valid_icd10(code: str) -> bool:
     return bool(_ICD10_PATTERN.match(code.strip()))
 
 
+@lru_cache(maxsize=512)
 def is_valid_atc(code: str) -> bool:
     """Check if a string matches the ATC medication code format.
 
