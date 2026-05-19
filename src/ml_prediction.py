@@ -347,6 +347,8 @@ class EnrollmentPredictor:
         Returns:
             PatientFeatures with all fields populated.
         """
+        if not isinstance(p, dict):
+            raise TypeError(f"Expected dict for patient features, got {type(p).__name__}")
         dob = p.get("date_of_birth")
         if isinstance(dob, (date, datetime)):
             ref = dob.date() if isinstance(dob, datetime) else dob
