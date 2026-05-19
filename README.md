@@ -280,6 +280,23 @@ A patient is `ELIGIBLE` only when **all** inclusion criteria are met and **no** 
 
 ---
 
+## Configuration Reference
+
+| Environment Variable | Default | Description |
+|---|---|---|
+| `API_KEY` | _(empty)_ | API key for protected endpoints; leave unset in dev |
+| `DATABASE_URL` | SQLite fallback | PostgreSQL connection string |
+| `FHIR_BASE_URL` | `http://fhir-server:8080/fhir` | FHIR R4 server base URL |
+| `FHIR_TIMEOUT` | `5.0` | FHIR HTTP request timeout in seconds |
+| `SMTP_HOST` | `localhost` | SMTP server hostname |
+| `SMTP_PORT` | `1025` | SMTP server port |
+| `SMTP_FROM` | `noreply@trial.local` | Sender address for recruitment emails |
+| `SMTP_TIMEOUT` | `5` | SMTP connection timeout in seconds |
+| `DRIFT_THRESHOLD` | `0.05` | KS-test p-value threshold for drift alerts |
+| `LOG_LEVEL` | `INFO` | Python logging level |
+
+---
+
 ## License
 
 MIT License — see [LICENSE](LICENSE)
