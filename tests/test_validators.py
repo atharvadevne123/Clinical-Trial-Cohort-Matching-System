@@ -134,3 +134,30 @@ def test_validate_conditions_empty_list():
 def test_validate_conditions_string_code():
     warnings = validate_patient_conditions(["I10", "E11"])
     assert warnings == []
+
+
+def test_validators_all_exports():
+    """All public symbols should be present in __all__."""
+    from src.validators import __all__ as exports
+    assert "is_valid_icd10" in exports
+    assert "is_valid_atc" in exports
+    assert "validate_enrollment_probability" in exports
+
+
+def test_is_valid_icd10_strips_whitespace():
+    """Validator should strip leading/trailing whitespace before matching."""
+    assert is_valid_icd10("  I10  ") is True
+
+
+def test_is_valid_atc_strips_whitespace():
+    assert is_valid_atc("  C09AA01  ") is True
+
+
+@pytest.mark.parametrize("invalid_icd10", ["", "10I", "i10", "INVALID", "12345"])
+def test_is_valid_icd10_invalid_formats(invalid_icd10):
+    assert is_valid_icd10(invalid_icd10) is False
+
+
+@pytest.mark.parametrize("valid_atc", ["C09AA01", "A10BA02", "B01AA03"])
+def test_is_valid_atc_valid_codes(valid_atc):
+    assert is_valid_atc(valid_atc) is True
