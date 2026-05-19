@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clinical-trial-cohort-matching"
-version = "1.0.0"
+version = "1.1.0"
 description = "Automated cohort matching system for clinical trials"
 readme = "README.md"
 requires-python = ">=3.9"

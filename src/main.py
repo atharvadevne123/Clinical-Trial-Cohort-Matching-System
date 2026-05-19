@@ -92,7 +92,7 @@ app = FastAPI(
         "Match patients to clinical trials using rule-based eligibility and "
         "XGBoost ML enrollment prediction."
     ),
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan,
 )
 
@@ -137,7 +137,7 @@ def get_db() -> Session:
 @app.get("/", tags=["Meta"])
 def root() -> Dict[str, str]:
     """Return API name and version metadata."""
-    return {"message": "Clinical Trial Cohort Matching API", "version": "1.0.0", "docs": "/docs"}
+    return {"message": "Clinical Trial Cohort Matching API", "version": "1.1.0", "docs": "/docs"}
 
 
 @app.get("/health", tags=["Meta"])
@@ -156,7 +156,7 @@ def healthz() -> Dict[str, str]:
 def version() -> Dict[str, Any]:
     """Return API version and build metadata."""
     return {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "api": "Clinical Trial Cohort Matching",
         "python_version": __import__("sys").version,
         "started_at": _START_TIME.isoformat(),
