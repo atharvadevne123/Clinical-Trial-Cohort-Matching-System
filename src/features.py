@@ -12,6 +12,15 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
+def _strip_timezone(dt: datetime) -> datetime:
+    """Return a naive datetime by stripping timezone info if present."""
+    return dt.replace(tzinfo=None) if dt.tzinfo is not None else dt
+
+
+DEFAULT_AGE: float = 50.0
+"""Fallback age in years used when date_of_birth is unknown or unparseable."""
+
 CONDITION_FLAGS: Dict[str, List[str]] = {
     "has_diabetes": ["diabetes", "e11", "a10ba02"],
     "has_hypertension": ["hypertension", "i10", "c09aa01"],
@@ -47,14 +56,15 @@ def compute_age(date_of_birth: Any) -> float:
         Age in decimal years, or 50.0 as a default if dob is unknown.
     """
     if date_of_birth is None:
-        return 50.0
+        return DEFAULT_AGE
     if isinstance(date_of_birth, str):
         try:
             date_of_birth = datetime.fromisoformat(date_of_birth.replace("Z", "+00:00"))
         except (ValueError, TypeError):
-            return 50.0
-    now = datetime.now(date_of_birth.tzinfo) if hasattr(date_of_birth, "tzinfo") and date_of_birth.tzinfo else datetime.now()
-    return (now - date_of_birth.replace(tzinfo=None) if hasattr(date_of_birth, "tzinfo") and date_of_birth.tzinfo else now - date_of_birth).days / 365.25
+            return DEFAULT_AGE
+    dob_naive = _strip_timezone(date_of_birth)
+    now = datetime.now()
+    return (now - dob_naive).days / 365.25
 
 
 def build_feature_vector(patient: Dict[str, Any]) -> np.ndarray:
