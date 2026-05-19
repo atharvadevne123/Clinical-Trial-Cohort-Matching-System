@@ -87,3 +87,50 @@ def test_patient_defaults(db):
     db.commit()
     fetched = db.query(Patient).filter(Patient.id == "MOD_P003").first()
     assert fetched is not None
+
+
+def test_patient_trial_match_enrolled_defaults_false(db):
+    p = Patient(id="MOD_P004", first_name="E", last_name="F", gender="male",
+                conditions=[], medications=[], allergies=[])
+    t = Trial(id="MOD_T004", name="Default Enroll Trial", phase="Phase 1",
+              primary_condition="Diabetes", target_enrollment=20)
+    db.add_all([p, t])
+    db.commit()
+    m = PatientTrialMatch(patient_id="MOD_P004", trial_id="MOD_T004",
+                          rule_match_score=60.0, ml_match_score=55.0,
+                          enrollment_probability=0.55, combined_score=57.5)
+    db.add(m)
+    db.commit()
+    fetched = db.query(PatientTrialMatch).filter(
+        PatientTrialMatch.patient_id == "MOD_P004"
+    ).first()
+    assert fetched.enrolled is False
+
+
+def test_trial_default_status_is_recruiting(db):
+    t = Trial(id="MOD_T005", name="Status Trial", phase="Phase 3",
+              primary_condition="Cancer", target_enrollment=100)
+    db.add(t)
+    db.commit()
+    fetched = db.query(Trial).filter(Trial.id == "MOD_T005").first()
+    assert fetched.status == "RECRUITING"
+
+
+def test_patient_created_at_set_automatically(db):
+    p = Patient(id="MOD_P005", first_name="G", last_name="H", gender="female",
+                conditions=[], medications=[], allergies=[])
+    db.add(p)
+    db.commit()
+    fetched = db.query(Patient).filter(Patient.id == "MOD_P005").first()
+    assert fetched.created_at is not None
+
+
+@pytest.mark.parametrize("gender", ["male", "female", "other", "unknown"])
+def test_patient_gender_values_persist(db, gender):
+    pid = f"MOD_GENDER_{gender}"
+    p = Patient(id=pid, first_name="X", last_name="Y", gender=gender,
+                conditions=[], medications=[], allergies=[])
+    db.add(p)
+    db.commit()
+    fetched = db.query(Patient).filter(Patient.id == pid).first()
+    assert fetched.gender == gender
