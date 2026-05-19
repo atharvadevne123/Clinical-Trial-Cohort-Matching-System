@@ -5,11 +5,14 @@ deterministic mock data when the server is unreachable (e.g. during local dev).
 """
 
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 import httpx
 
 logger = logging.getLogger(__name__)
+
+_FHIR_TIMEOUT: float = float(os.environ.get("FHIR_TIMEOUT", "5.0"))
 
 
 class FHIRClient:
@@ -26,7 +29,7 @@ class FHIRClient:
     def __init__(
         self,
         base_url: str = "http://fhir-server:8080/fhir",
-        timeout: float = 5.0,
+        timeout: float = _FHIR_TIMEOUT,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
