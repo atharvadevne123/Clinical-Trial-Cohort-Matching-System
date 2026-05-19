@@ -52,3 +52,27 @@ def test_drift_after_reset_has_zero_samples():
     response = client.get("/monitoring/summary")
     data = response.json()
     assert data["count"] == 0
+
+
+def test_drift_endpoint_with_api_key_when_not_required(monkeypatch):
+    """When API_KEY is not set, requests without a key should still succeed."""
+    monkeypatch.delenv("API_KEY", raising=False)
+    response = client.get("/monitoring/drift")
+    assert response.status_code == 200
+
+
+def test_monitoring_drift_returns_drift_detected_key():
+    response = client.get("/monitoring/drift")
+    data = response.json()
+    assert isinstance(data.get("drift_detected"), bool)
+
+
+def test_monitoring_summary_min_max_none_when_empty():
+    """When no predictions recorded, min/max should be None."""
+    client.post("/monitoring/reset")
+    response = client.get("/monitoring/summary")
+    data = response.json()
+    if data["count"] == 0:
+        assert data["mean"] is None
+        assert data["min"] is None
+        assert data["max"] is None
