@@ -1,4 +1,8 @@
-"""Database Models for Clinical Trial Cohort Matching System."""
+"""Database Models for Clinical Trial Cohort Matching System.
+
+Defines SQLAlchemy ORM models for Patient, Trial, and PatientTrialMatch.
+Includes composite indexes for common query patterns and a UTC _now() helper.
+"""
 
 import logging
 import os
