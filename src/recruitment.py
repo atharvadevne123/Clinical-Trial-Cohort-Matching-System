@@ -116,7 +116,7 @@ class RecruitmentEngine:
                         "trial_name": trial.name,
                     })
 
-        return sorted(scored, key=lambda x: x["score"], reverse=True)
+        return sorted(scored, key=lambda x: (-x["score"], x["patient_id"]))
 
     def send_recruitment_email(self, candidate: Dict[str, Any]) -> bool:
         """Send a recruitment invitation email to a single candidate.
