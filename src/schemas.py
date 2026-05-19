@@ -140,20 +140,20 @@ class TrialResponse(BaseModel):
 class MatchResponse(BaseModel):
     """Schema for patient-trial match records returned by the API."""
 
-    id: int
-    patient_id: str
-    trial_id: str
-    rule_match_score: float
-    ml_match_score: float
-    enrollment_probability: float
-    combined_score: float
-    match_status: str
-    matched_criteria: Optional[List[Dict[str, Any]]] = None
-    violated_criteria: Optional[List[Dict[str, Any]]] = None
-    reasons: Optional[List[str]] = None
-    letter_sent: bool
-    enrolled: bool
-    created_at: datetime
+    id: int = Field(..., description="Auto-incremented match record ID")
+    patient_id: str = Field(..., description="Patient identifier")
+    trial_id: str = Field(..., description="Clinical trial identifier")
+    rule_match_score: float = Field(..., description="Rule-based eligibility score (0–100)")
+    ml_match_score: float = Field(..., description="ML model match score (0–100)")
+    enrollment_probability: float = Field(..., description="XGBoost enrollment probability (0.0–1.0)")
+    combined_score: float = Field(..., description="Weighted combination of rule and ML scores")
+    match_status: str = Field(..., description="Status: PENDING, ELIGIBLE, INELIGIBLE, ENROLLED")
+    matched_criteria: Optional[List[Dict[str, Any]]] = Field(None, description="Inclusion criteria met")
+    violated_criteria: Optional[List[Dict[str, Any]]] = Field(None, description="Exclusion criteria violated")
+    reasons: Optional[List[str]] = Field(None, description="Human-readable match reasoning")
+    letter_sent: bool = Field(..., description="Whether a recruitment letter has been sent")
+    enrolled: bool = Field(..., description="Whether the patient is enrolled in the trial")
+    created_at: datetime = Field(..., description="Timestamp when the match was recorded")
 
     class Config:
         from_attributes = True
