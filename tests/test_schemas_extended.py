@@ -97,3 +97,64 @@ def test_clinical_note_request_requires_text():
 def test_clinical_note_request_valid():
     req = ClinicalNoteRequest(text="Patient has hypertension.")
     assert req.text == "Patient has hypertension."
+
+
+@pytest.mark.parametrize("invalid_email", [
+    "notanemail",
+    "missing-at-sign",
+    "@nodomain",
+    "nolocal@",
+    "no-dot@domain",
+])
+def test_patient_invalid_email_formats(invalid_email):
+    """All invalid email formats should raise ValidationError."""
+    with pytest.raises(ValidationError):
+        PatientCreate(
+            id="P_BAD_EMAIL",
+            first_name="Test",
+            last_name="User",
+            date_of_birth=datetime(1990, 1, 1),
+            gender="male",
+            email=invalid_email,
+        )
+
+
+@pytest.mark.parametrize("valid_email", [
+    "test@example.com",
+    "user.name@domain.org",
+    "user+tag@sub.domain.co.uk",
+])
+def test_patient_valid_email_formats(valid_email):
+    p = PatientCreate(
+        id="P_GOOD_EMAIL",
+        first_name="Test",
+        last_name="User",
+        date_of_birth=datetime(1990, 1, 1),
+        gender="female",
+        email=valid_email,
+    )
+    assert p.email == valid_email
+
+
+def test_patient_none_email_accepted():
+    """email=None should be accepted."""
+    p = PatientCreate(
+        id="P_NO_EMAIL",
+        first_name="Test",
+        last_name="User",
+        date_of_birth=datetime(1990, 1, 1),
+        gender="other",
+    )
+    assert p.email is None
+
+
+@pytest.mark.parametrize("gender", ["male", "female", "other", "unknown"])
+def test_patient_all_valid_genders(gender):
+    p = PatientCreate(
+        id=f"P_{gender}",
+        first_name="Test",
+        last_name="User",
+        date_of_birth=datetime(1990, 1, 1),
+        gender=gender,
+    )
+    assert p.gender == gender
