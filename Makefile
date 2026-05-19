@@ -36,3 +36,15 @@ clean:
 
 seed:
 	curl -s -X POST http://localhost:8000/admin/seed -H "X-API-Key: $$API_KEY" | python3 -m json.tool
+
+coverage-ci:
+	pytest tests/ --cov=src --cov-report=xml --cov-fail-under=60 -q
+
+type-check:
+	python -m mypy src/ --ignore-missing-imports --no-error-summary
+
+retrain:
+	python pipelines/retrain_pipeline.py
+
+benchmark:
+	python scripts/benchmark.py
