@@ -74,3 +74,39 @@ def test_is_negated_returns_false_for_positive_mention(nlp):
 def test_is_negated_returns_true_for_negated_mention(nlp):
     text = "patient denies hypertension entirely"
     assert nlp._is_negated(text, "hypertension")
+
+
+def test_negation_window_does_not_false_positive_on_distant_negation(nlp):
+    """Negation word more than 60 chars before keyword should NOT negate it."""
+    from src.nlp import _NEGATION_WINDOW_CHARS
+    padding = "x" * (_NEGATION_WINDOW_CHARS + 10)
+    text = f"no {padding} hypertension"
+    assert not nlp._is_negated(text.lower(), "hypertension")
+
+
+def test_negation_window_constant_is_positive():
+    from src.nlp import _NEGATION_WINDOW_CHARS, _SEVERITY_WINDOW_CHARS
+    assert _NEGATION_WINDOW_CHARS > 0
+    assert _SEVERITY_WINDOW_CHARS > _NEGATION_WINDOW_CHARS
+
+
+def test_severity_extraction_for_severe_condition(nlp):
+    note = "severe diabetes requiring insulin"
+    entities = nlp.extract_entities(note)
+    assert entities["severity"].get("diabetes mellitus") == "severe" or \
+           entities["severity"].get("diabetes") == "severe"
+
+
+def test_empty_text_returns_empty_entities(nlp):
+    result = nlp.extract_entities("")
+    assert result == {"conditions": [], "medications": [], "symptoms": [], "severity": {}}
+
+
+@pytest.mark.parametrize("text,expected_count", [
+    ("", 0),
+    ("Patient is healthy.", 0),
+    ("Patient has hypertension and diabetes.", 2),
+])
+def test_entity_count_parametrized(nlp, text, expected_count):
+    result = nlp.extract_entities(text)
+    assert len(result["conditions"]) == expected_count
