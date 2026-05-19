@@ -157,3 +157,33 @@ def test_gt_operator_parametrized(matcher, a, b, expected):
 ])
 def test_in_operator_parametrized(matcher, a, b, expected):
     assert matcher._in(a, b) == expected
+
+
+def test_score_candidates_returns_sorted_list(matcher):
+    """score_candidates should return results sorted by match_score descending."""
+    patients = [
+        {"id": "P_S1", "conditions": [{"code": "I10"}], "medications": []},
+        {"id": "P_S2", "conditions": [], "medications": []},
+    ]
+    trial = {
+        "id": "T_SCORE",
+        "inclusion_criteria": [{"field": "condition:I10", "operator": "EXISTS", "value": None}],
+        "exclusion_criteria": [],
+    }
+    results = matcher.score_candidates(patients, trial)
+    assert isinstance(results, list)
+    assert len(results) == 2
+    scores = [r["match_score"] for r in results]
+    assert scores == sorted(scores, reverse=True)
+
+
+def test_score_candidates_includes_patient_id(matcher):
+    patients = [{"id": "P_SID", "conditions": [], "medications": []}]
+    trial = {"id": "T_SID", "inclusion_criteria": [], "exclusion_criteria": []}
+    results = matcher.score_candidates(patients, trial)
+    assert results[0]["patient_id"] == "P_SID"
+
+
+def test_score_candidates_empty_list(matcher):
+    results = matcher.score_candidates([], {"id": "T_EMPTY", "inclusion_criteria": [], "exclusion_criteria": []})
+    assert results == []
