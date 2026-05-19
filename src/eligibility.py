@@ -263,6 +263,25 @@ class EligibilityMatcher:
         """Return True if a is None."""
         return a is None
 
+    def score_candidates(
+        self, patients: List[Dict[str, Any]], trial: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Score a list of patients against a trial, sorted by match_score descending.
+
+        Args:
+            patients: List of patient record dicts.
+            trial: Trial record dict with inclusion_criteria and exclusion_criteria.
+
+        Returns:
+            List of result dicts (from check_match) with patient_id added, sorted descending.
+        """
+        results = []
+        for patient in patients:
+            result = self.check_match(patient, trial)
+            result["patient_id"] = patient.get("id", "unknown")
+            results.append(result)
+        return sorted(results, key=lambda r: r["match_score"], reverse=True)
+
 
 matcher = EligibilityMatcher()
 
