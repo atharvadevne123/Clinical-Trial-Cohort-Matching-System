@@ -91,3 +91,47 @@ def test_dict_to_features_condition_flags():
     assert f.has_diabetes == 1
     assert f.has_cancer == 1
     assert f.has_hypertension == 0
+
+
+def test_dict_to_features_raises_on_non_dict():
+    """_dict_to_features must raise TypeError for non-dict input."""
+    with pytest.raises(TypeError, match="Expected dict"):
+        EnrollmentPredictor._dict_to_features("not a dict")
+
+
+def test_dict_to_features_raises_on_list():
+    with pytest.raises(TypeError):
+        EnrollmentPredictor._dict_to_features([1, 2, 3])
+
+
+def test_predict_with_no_model_uses_rule_based(predictor):
+    """When model is None, predict() should use _rule_based fallback."""
+    predictor.model = None
+    f = PatientFeatures(age=55)
+    result = predictor.predict(f, "P001", "T001")
+    assert 0.0 <= result.enrollment_probability <= 1.0
+    assert result.confidence in ("HIGH", "MEDIUM", "LOW")
+
+
+def test_predict_batch_result_sorted_descending(predictor):
+    predictor.model = None
+    patients = [
+        {"id": f"P{i}", "date_of_birth": "1975-01-01", "gender": "male",
+         "conditions": [], "medications": [], "bmi": 20 + i}
+        for i in range(5)
+    ]
+    results = predictor.predict_batch(patients, "T_BATCH")
+    probs = [r.enrollment_probability for r in results]
+    assert probs == sorted(probs, reverse=True)
+
+
+@pytest.mark.parametrize("age,expected_range", [
+    (25, (0.0, 1.0)),
+    (55, (0.0, 1.0)),
+    (85, (0.0, 1.0)),
+])
+def test_rule_based_returns_valid_probability(predictor, age, expected_range):
+    predictor.model = None
+    f = PatientFeatures(age=age)
+    prob = predictor._rule_based(f)
+    assert expected_range[0] <= prob <= expected_range[1]
