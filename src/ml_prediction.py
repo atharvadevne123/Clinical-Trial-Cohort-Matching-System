@@ -216,7 +216,7 @@ class EnrollmentPredictor:
         """
         x = features.to_array().reshape(1, -1)
         if self.model is not None:
-            prob = float(self.model.predict_proba(x)[0][1])
+            prob = float(np.clip(self.model.predict_proba(x)[0][1], 0.0, 1.0))
         else:
             logger.debug("Model not loaded; using rule-based fallback for %s", patient_id)
             prob = self._rule_based(features)
