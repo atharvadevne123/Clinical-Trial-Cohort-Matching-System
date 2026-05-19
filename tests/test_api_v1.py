@@ -70,3 +70,46 @@ def test_v1_status_includes_version():
 def test_v1_endpoints_return_200(path):
     response = client.get(path)
     assert response.status_code == 200
+
+
+def test_v1_health_has_timestamp():
+    response = client.get("/api/v1/health")
+    data = response.json()
+    assert "timestamp" in data
+
+
+def test_v1_create_and_get_patient():
+    from datetime import datetime
+    payload = {
+        "id": "V1_P001",
+        "first_name": "V1",
+        "last_name": "Patient",
+        "date_of_birth": "1985-05-15T00:00:00",
+        "gender": "female",
+    }
+    resp = client.post("/api/v1/patients", json=payload)
+    assert resp.status_code in (200, 201, 409)
+    resp2 = client.get("/api/v1/patients/V1_P001")
+    assert resp2.status_code in (200, 404)
+
+
+def test_v1_list_patients_returns_list():
+    resp = client.get("/api/v1/patients")
+    assert isinstance(resp.json(), list)
+
+
+def test_v1_list_trials_returns_list():
+    resp = client.get("/api/v1/trials")
+    assert isinstance(resp.json(), list)
+
+
+def test_v1_status_has_matches_key():
+    resp = client.get("/api/v1/status")
+    data = resp.json()
+    assert "matches" in data
+
+
+@pytest.mark.parametrize("invalid_limit", [0, -5])
+def test_v1_list_patients_invalid_limit(invalid_limit):
+    resp = client.get(f"/api/v1/patients?limit={invalid_limit}")
+    assert resp.status_code == 422
