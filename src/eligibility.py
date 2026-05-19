@@ -265,3 +265,5 @@ class EligibilityMatcher:
 
 
 matcher = EligibilityMatcher()
+
+__all__ = ["EligibilityMatcher", "matcher", "_INCLUSION_WEIGHT", "_EXCLUSION_WEIGHT"]
