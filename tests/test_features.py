@@ -84,3 +84,51 @@ def test_pipeline_transform_without_fit():
     patients = [{"gender": "male", "conditions": [], "medications": []}]
     X = pipeline.transform(patients)
     assert X.shape == (1, 14)
+
+
+def test_compute_age_timezone_aware_dob():
+    """compute_age should handle timezone-aware datetime objects."""
+    from datetime import datetime, timezone
+    dob_aware = datetime(1985, 3, 10, tzinfo=timezone.utc)
+    age = compute_age(dob_aware)
+    assert 35 < age < 45
+
+
+def test_compute_age_from_datetime_object():
+    from datetime import datetime
+    dob = datetime(1980, 1, 1)
+    age = compute_age(dob)
+    assert 40 < age < 50
+
+
+@pytest.mark.parametrize("dob,expected_range", [
+    ("1950-01-01", (70, 80)),
+    ("2000-01-01", (20, 30)),
+    ("1990-06-15", (30, 40)),
+])
+def test_compute_age_parametrized(dob, expected_range):
+    age = compute_age(dob)
+    assert expected_range[0] < age < expected_range[1]
+
+
+def test_build_feature_vector_female_gender():
+    patient = {"gender": "female", "conditions": [], "medications": []}
+    v = build_feature_vector(patient)
+    assert v[1] == 0  # gender_male should be 0 for female
+
+
+def test_build_feature_vector_gender_case_insensitive():
+    patient_male = {"gender": "MALE", "conditions": [], "medications": []}
+    v = build_feature_vector(patient_male)
+    assert v[1] == 1
+
+
+def test_strip_timezone_exported():
+    """Verify _strip_timezone helper is accessible and works."""
+    from datetime import datetime, timezone
+    from src.features import _strip_timezone
+    aware = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    naive = _strip_timezone(aware)
+    assert naive.tzinfo is None
+    already_naive = datetime(2020, 1, 1)
+    assert _strip_timezone(already_naive).tzinfo is None
