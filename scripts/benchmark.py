@@ -118,9 +118,9 @@ def benchmark_ml_predictor(n_patients: int = 100) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     import json
-    print("=== Eligibility Benchmark ===")
-    print(json.dumps(benchmark_eligibility_matcher(200, 25), indent=2))
-    print("\n=== ML Predictor Benchmark ===")
-    print(json.dumps(benchmark_ml_predictor(200), indent=2))
+    logging.basicConfig(level=logging.INFO)
+    eligibility_result = benchmark_eligibility_matcher(200, 25)
+    ml_result = benchmark_ml_predictor(200)
+    logger.info("Eligibility benchmark: %s", json.dumps(eligibility_result, indent=2))
+    logger.info("ML predictor benchmark: %s", json.dumps(ml_result, indent=2))
