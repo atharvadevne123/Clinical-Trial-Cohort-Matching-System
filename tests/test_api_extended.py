@@ -111,3 +111,59 @@ def test_ml_predict_batch():
 def test_list_patients_invalid_limit(invalid_limit):
     response = client.get(f"/patients?limit={invalid_limit}")
     assert response.status_code == 422
+
+
+def test_nlp_extract_empty_text_returns_400():
+    response = client.post("/nlp/extract-entities", json={"text": "   "})
+    assert response.status_code == 400
+
+
+def test_nlp_extract_valid_text():
+    response = client.post("/nlp/extract-entities", json={"text": "Patient has hypertension."})
+    assert response.status_code == 200
+    data = response.json()
+    assert "text_length" in data
+    assert "extraction_result" in data
+
+
+def test_nlp_clinical_profile_empty_text_returns_400():
+    response = client.post("/nlp/clinical-profile", json={"text": ""})
+    assert response.status_code == 400
+
+
+def test_nlp_clinical_profile_valid_text():
+    response = client.post("/nlp/clinical-profile", json={"text": "Patient has diabetes."})
+    assert response.status_code == 200
+    data = response.json()
+    assert "clinical_profile" in data
+
+
+def test_get_nonexistent_patient_returns_404():
+    response = client.get("/patients/NO_SUCH_PATIENT_XYZ")
+    assert response.status_code == 404
+
+
+def test_get_nonexistent_trial_returns_404():
+    response = client.get("/trials/NO_SUCH_TRIAL_XYZ")
+    assert response.status_code == 404
+
+
+def test_status_endpoint_returns_api_key():
+    response = client.get("/status")
+    assert response.status_code == 200
+    data = response.json()
+    assert "api" in data
+    assert data["api"] == "running"
+
+
+def test_root_endpoint():
+    response = client.get("/")
+    assert response.status_code == 200
+    data = response.json()
+    assert "version" in data
+
+
+@pytest.mark.parametrize("path", ["/health", "/healthz", "/version", "/status", "/metrics"])
+def test_meta_endpoints_return_200(path):
+    response = client.get(path)
+    assert response.status_code == 200
