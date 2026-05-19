@@ -41,6 +41,12 @@ _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 _START_TIME: datetime = datetime.now(timezone.utc)
 
+if not API_KEY:
+    logger.warning(
+        "API_KEY env var is not set — all endpoints are unauthenticated. "
+        "Set API_KEY in production."
+    )
+
 
 def require_api_key(key: Optional[str] = Security(_api_key_header)) -> Optional[str]:
     """Validate the X-API-Key header when API_KEY env var is set.
