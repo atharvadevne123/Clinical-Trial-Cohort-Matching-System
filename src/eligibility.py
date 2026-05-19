@@ -217,42 +217,50 @@ class EligibilityMatcher:
     # --- comparison helpers ---
 
     def _eq(self, a: Any, b: Any) -> bool:
+        """Return True if a equals b (exact match)."""
         return a == b
 
     def _gt(self, a: Any, b: Any) -> bool:
+        """Return True if numeric a is strictly greater than numeric b."""
         try:
             return float(a) > float(b)
         except (TypeError, ValueError):
             return False
 
     def _lt(self, a: Any, b: Any) -> bool:
+        """Return True if numeric a is strictly less than numeric b."""
         try:
             return float(a) < float(b)
         except (TypeError, ValueError):
             return False
 
     def _gte(self, a: Any, b: Any) -> bool:
+        """Return True if numeric a is greater than or equal to numeric b."""
         try:
             return float(a) >= float(b)
         except (TypeError, ValueError):
             return False
 
     def _lte(self, a: Any, b: Any) -> bool:
+        """Return True if numeric a is less than or equal to numeric b."""
         try:
             return float(a) <= float(b)
         except (TypeError, ValueError):
             return False
 
     def _in(self, a: Any, b: Any) -> bool:
+        """Return True if a (or any element of a list a) appears in comma-separated b."""
         options = [s.strip() for s in str(b).split(",")]
         if isinstance(a, list):
             return any(str(item) in options for item in a)
         return str(a) in options
 
     def _exists(self, a: Any, b: Any) -> bool:
+        """Return True if a is not None."""
         return a is not None
 
     def _not_exists(self, a: Any, b: Any) -> bool:
+        """Return True if a is None."""
         return a is None
 
 
