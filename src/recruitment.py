@@ -10,12 +10,26 @@ import os
 import smtplib
 from datetime import datetime, timezone
 from email.mime.text import MIMEText
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TypedDict
 
 from src.ml_prediction import EnrollmentPredictor, predictor
 from src.models import Patient, PatientTrialMatch, SessionLocal, Trial
 
 logger = logging.getLogger(__name__)
+
+
+class CandidateResult(TypedDict):
+    """Typed dict for a scored candidate returned by score_eligible_patients."""
+
+    patient_id: str
+    patient_name: str
+    email: str
+    score: float
+    confidence: str
+    recommendation: str
+    trial_id: str
+    trial_name: str
+
 
 _SMTP_HOST: str = os.environ.get("SMTP_HOST", "localhost")
 _SMTP_PORT: int = int(os.environ.get("SMTP_PORT", "1025"))
