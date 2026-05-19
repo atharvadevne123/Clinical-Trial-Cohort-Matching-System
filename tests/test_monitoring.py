@@ -81,3 +81,45 @@ def test_record_boundary_values(monitor, prob):
     monitor.record(prob)
     assert len(monitor.predictions) == 1
     assert monitor.predictions[0] == prob
+
+
+def test_drift_threshold_configurable(monkeypatch):
+    """DRIFT_THRESHOLD should be read from the DRIFT_THRESHOLD env var."""
+    import importlib
+    monkeypatch.setenv("DRIFT_THRESHOLD", "0.10")
+    import src.monitoring as mon_module
+    importlib.reload(mon_module)
+    assert mon_module._DRIFT_THRESHOLD == 0.10
+    # restore
+    monkeypatch.delenv("DRIFT_THRESHOLD", raising=False)
+    importlib.reload(mon_module)
+
+
+def test_check_drift_returns_threshold_key(monitor):
+    """check_drift result should include threshold when there is enough data."""
+    rng = __import__("numpy").random.default_rng(0)
+    monitor.set_reference(rng.uniform(0, 1, 200).tolist())
+    for _ in range(50):
+        monitor.record(float(rng.uniform(0, 1)))
+    result = monitor.check_drift()
+    assert "threshold" in result
+
+
+@pytest.mark.parametrize("window_size", [30, 100, 500])
+def test_monitor_window_sizes(window_size):
+    m = PredictionMonitor(window_size=window_size)
+    for i in range(window_size + 10):
+        m.record(float(i) / (window_size + 10))
+    assert len(m.predictions) == window_size
+
+
+def test_summary_stats_accuracy():
+    """Verify that summary stats match numpy calculations."""
+    import numpy as np
+    m = PredictionMonitor()
+    data = [0.1, 0.2, 0.3, 0.4, 0.5]
+    for v in data:
+        m.record(v)
+    s = m.summary()
+    expected_mean = round(float(np.mean(data)), 4)
+    assert abs(s["mean"] - expected_mean) < 1e-4
