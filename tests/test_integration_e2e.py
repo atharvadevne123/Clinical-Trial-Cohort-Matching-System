@@ -115,3 +115,45 @@ def test_integration_status_shows_records():
     data = response.json()
     assert data["patients"] >= 1
     assert data["trials"] >= 1
+
+
+def test_integration_get_nonexistent_match_returns_404():
+    response = client.get("/patients/NO_SUCH_INTG_PATIENT/matches")
+    assert response.status_code == 404
+
+
+def test_integration_get_trial_matches_not_found():
+    response = client.get("/matches/NO_SUCH_INTG_TRIAL")
+    assert response.status_code == 404
+
+
+def test_integration_nlp_clinical_profile():
+    note = "Patient has diabetes mellitus. On metformin."
+    response = client.post("/nlp/clinical-profile", json={"text": note})
+    assert response.status_code == 200
+    data = response.json()
+    assert "clinical_profile" in data
+    assert data["clinical_profile"]["num_conditions"] >= 0
+
+
+def test_integration_ml_batch_predict_returns_sorted():
+    payload = {
+        "patients": [
+            {"id": "INTG_B1", "age": 65, "gender": "male", "conditions": [], "medications": []},
+            {"id": "INTG_B2", "age": 30, "gender": "female", "conditions": [], "medications": []},
+        ],
+        "trial_id": TRIAL_ID,
+    }
+    response = client.post("/ml/predict/batch", json=payload)
+    assert response.status_code == 200
+    results = response.json()
+    probs = [r["enrollment_probability"] for r in results]
+    assert probs == sorted(probs, reverse=True)
+
+
+def test_integration_version_endpoint():
+    response = client.get("/version")
+    assert response.status_code == 200
+    data = response.json()
+    assert "version" in data
+    assert "started_at" in data
