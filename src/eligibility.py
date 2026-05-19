@@ -4,11 +4,17 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
+_INCLUSION_WEIGHT: float = 0.7
+_EXCLUSION_WEIGHT: float = 0.3
+
+
 class EligibilityMatcher:
     """Rule-based engine that evaluates patient eligibility against trial criteria.
 
     Supports operators: EQ, GT, LT, GTE, LTE, IN, EXISTS, NOT_EXISTS.
     Field prefixes ``condition:`` and ``medication:`` allow ICD-10/ATC code lookups.
+
+    Score formula: (inclusion_pct × 0.7) + (exclusion_pct × 0.3)
     """
 
     def __init__(self) -> None:
@@ -57,7 +63,9 @@ class EligibilityMatcher:
             if exclusion_criteria else 100.0
         )
 
-        match_score: float = round((inclusion_score * 0.7) + (exclusion_score * 0.3), 1)
+        match_score: float = round(
+            (inclusion_score * _INCLUSION_WEIGHT) + (exclusion_score * _EXCLUSION_WEIGHT), 1
+        )
 
         is_eligible: bool = (
             len(matched_inclusion) == len(inclusion_criteria)
