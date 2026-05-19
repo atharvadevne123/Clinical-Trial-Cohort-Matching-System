@@ -138,3 +138,45 @@ def test_parse_condition_missing_coding(fhir):
     parsed = fhir.parse_condition(fhir_cond)
     assert parsed["icd10_code"] is None
     assert parsed["display"] == "Unknown"
+
+
+def test_fhir_timeout_configurable(monkeypatch):
+    """FHIR_TIMEOUT env var should control the default timeout."""
+    import importlib
+    monkeypatch.setenv("FHIR_TIMEOUT", "10.0")
+    import src.fhir as fhir_module
+    importlib.reload(fhir_module)
+    assert fhir_module._FHIR_TIMEOUT == 10.0
+    monkeypatch.delenv("FHIR_TIMEOUT", raising=False)
+    importlib.reload(fhir_module)
+
+
+def test_fhir_client_uses_fhir_timeout_default():
+    """FHIRClient default timeout should equal _FHIR_TIMEOUT."""
+    from src.fhir import FHIRClient, _FHIR_TIMEOUT
+    client = FHIRClient()
+    assert client.timeout == _FHIR_TIMEOUT
+
+
+def test_parse_medication_missing_coding(fhir):
+    """parse_medication should handle medications with no coding entries."""
+    sparse_med = {
+        "resourceType": "MedicationStatement",
+        "status": "active",
+        "medicationCodeableConcept": {"coding": [], "text": "Unknown Drug"},
+    }
+    parsed = fhir.parse_medication(sparse_med)
+    assert parsed["medication_code"] is None
+    assert parsed["display"] == "Unknown Drug"
+
+
+@pytest.mark.parametrize("gender", ["male", "female", "unknown"])
+def test_parse_patient_gender(fhir, gender):
+    fhir_patient = {
+        "resourceType": "Patient",
+        "id": f"pt-{gender}",
+        "name": [{"given": ["Test"], "family": "User"}],
+        "gender": gender,
+    }
+    parsed = fhir.parse_patient(fhir_patient)
+    assert parsed["gender"] == gender
