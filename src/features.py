@@ -12,6 +12,19 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+PatientDict = Dict[str, Any]
+ConditionList = List[Any]
+
+__all__ = [
+    "compute_age",
+    "build_feature_vector",
+    "extract_condition_flags",
+    "ClinicalFeaturePipeline",
+    "DEFAULT_AGE",
+    "CONDITION_FLAGS",
+    "_strip_timezone",
+]
+
 
 def _strip_timezone(dt: datetime) -> datetime:
     """Return a naive datetime by stripping timezone info if present."""
