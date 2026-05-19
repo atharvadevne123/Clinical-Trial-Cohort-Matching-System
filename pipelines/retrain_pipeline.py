@@ -14,7 +14,9 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "src", "enrollment_model.joblib")
+MODEL_PATH: str = os.path.join(
+    os.path.dirname(__file__), "..", "src", "enrollment_model.joblib"
+)
 
 
 class RetrainingPipeline:
