@@ -4,6 +4,7 @@ Provides a pipeline that can be triggered manually or scheduled to retrain
 the XGBoost enrollment model using recent prediction data from the database.
 """
 
+import json
 import logging
 import os
 from datetime import datetime, timezone
@@ -107,5 +108,4 @@ if __name__ == "__main__":
     p = RetrainingPipeline()
     X, y = p.generate_synthetic_data(1000)
     result = p.run(X, y)
-    import json
-    print(json.dumps(result, indent=2))
+    logger.info("Retraining result: %s", json.dumps(result, indent=2))
