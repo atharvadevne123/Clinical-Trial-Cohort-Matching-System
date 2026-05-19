@@ -97,3 +97,40 @@ def test_validate_conditions_mixed():
     conditions = [{"code": "I10"}, {"code": "NOT_VALID"}]
     warnings = validate_patient_conditions(conditions)
     assert len(warnings) == 1
+
+
+@pytest.mark.parametrize("code,expected", [
+    ("Z00.00", True),
+    ("Z00.00A", True),
+    ("M54.5", True),
+    ("F32", True),
+    ("G43.909", True),
+    ("z10", False),
+    ("I10.X9999999", False),
+])
+def test_is_valid_icd10_extended_formats(code, expected):
+    """Test ICD-10 validation with extended alphanumeric suffix formats."""
+    assert is_valid_icd10(code) == expected
+
+
+def test_icd10_lru_cache_returns_consistent_results():
+    """Verify lru_cache doesn't corrupt results on repeated calls."""
+    for _ in range(5):
+        assert is_valid_icd10("I10") is True
+        assert is_valid_icd10("bad") is False
+
+
+@pytest.mark.parametrize("prob", [0.0, 0.001, 0.5, 0.999, 1.0])
+def test_validate_probability_boundary_values(prob):
+    valid, _ = validate_enrollment_probability(prob)
+    assert valid is True
+
+
+def test_validate_conditions_empty_list():
+    warnings = validate_patient_conditions([])
+    assert warnings == []
+
+
+def test_validate_conditions_string_code():
+    warnings = validate_patient_conditions(["I10", "E11"])
+    assert warnings == []
