@@ -11,7 +11,7 @@ from typing import Any, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-_ICD10_PATTERN = re.compile(r"^[A-Z][0-9]{2}(\.[0-9]{1,4})?$")
+_ICD10_PATTERN = re.compile(r"^[A-Z][0-9]{2}(\.[A-Z0-9]{1,5})?$")
 _ATC_PATTERN = re.compile(r"^[A-Z][0-9]{2}[A-Z]{2}[0-9]{2}$")
 
 
