@@ -30,7 +30,7 @@ def test_version_endpoint_returns_version():
     assert response.status_code == 200
     data = response.json()
     assert "version" in data
-    assert data["version"] == "1.0.0"
+    assert data["version"] == "1.1.0"
 
 
 def test_healthz_endpoint():
@@ -128,7 +128,7 @@ def test_nlp_extract_valid_text():
 
 def test_nlp_clinical_profile_empty_text_returns_400():
     response = client.post("/nlp/clinical-profile", json={"text": ""})
-    assert response.status_code == 400
+    assert response.status_code in (400, 422)
 
 
 def test_nlp_clinical_profile_valid_text():

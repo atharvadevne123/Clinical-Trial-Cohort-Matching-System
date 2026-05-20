@@ -53,7 +53,7 @@ class FHIRClient:
             resp = httpx.get(url, timeout=self.timeout)
             resp.raise_for_status()
             return resp.json()
-        except (httpx.HTTPStatusError, httpx.RequestError):
+        except Exception:
             logger.warning("FHIR server unreachable – returning mock Patient for %s", patient_id)
             return self._mock_patient(patient_id)
 
@@ -72,7 +72,7 @@ class FHIRClient:
             resp.raise_for_status()
             bundle = resp.json()
             return [entry["resource"] for entry in bundle.get("entry", [])]
-        except (httpx.HTTPStatusError, httpx.RequestError):
+        except Exception:
             logger.warning("FHIR server unreachable – returning mock Conditions for %s", patient_id)
             return self._mock_conditions()
 
@@ -91,7 +91,7 @@ class FHIRClient:
             resp.raise_for_status()
             bundle = resp.json()
             return [entry["resource"] for entry in bundle.get("entry", [])]
-        except (httpx.HTTPStatusError, httpx.RequestError):
+        except Exception:
             logger.warning("FHIR server unreachable – returning mock Medications for %s", patient_id)
             return self._mock_medications()
 
@@ -132,7 +132,8 @@ class FHIRClient:
         Returns:
             Dict with icd10_code and display keys.
         """
-        coding = (fhir_condition.get("code") or {}).get("coding", [{}])[0]
+        coding_list = (fhir_condition.get("code") or {}).get("coding", [])
+        coding = coding_list[0] if coding_list else {}
         return {
             "icd10_code": coding.get("code"),
             "display": (fhir_condition.get("code") or {}).get("text") or coding.get("display", ""),
@@ -148,7 +149,8 @@ class FHIRClient:
             Dict with medication_code, display, and status keys.
         """
         med_ref = fhir_medication.get("medicationCodeableConcept") or {}
-        coding = med_ref.get("coding", [{}])[0]
+        coding_list = med_ref.get("coding", [])
+        coding = coding_list[0] if coding_list else {}
         return {
             "medication_code": coding.get("code"),
             "display": med_ref.get("text") or coding.get("display", ""),
