@@ -25,6 +25,7 @@ class EligibilityMatcher:
             "LTE": self._lte,
             "IN": self._in,
             "NOT_IN": self._not_in,
+            "CONTAINS": self._contains,
             "EXISTS": self._exists,
             "NOT_EXISTS": self._not_exists,
         }
@@ -262,6 +263,12 @@ class EligibilityMatcher:
             return not any(str(item) in options for item in a)
         return str(a) not in options
 
+    def _contains(self, a: Any, b: Any) -> bool:
+        """Return True if string a contains substring b (case-insensitive)."""
+        if a is None or b is None:
+            return False
+        return str(b).lower() in str(a).lower()
+
     def _exists(self, a: Any, b: Any) -> bool:
         """Return True if a is not None."""
         return a is not None
@@ -301,5 +308,5 @@ __all__ = [
 ]
 
 SUPPORTED_OPERATORS: List[str] = [
-    "EQ", "GT", "LT", "GTE", "LTE", "IN", "NOT_IN", "EXISTS", "NOT_EXISTS",
+    "EQ", "GT", "LT", "GTE", "LTE", "IN", "NOT_IN", "CONTAINS", "EXISTS", "NOT_EXISTS",
 ]
