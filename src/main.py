@@ -547,6 +547,28 @@ _COMBINED_RULE_WEIGHT: float = 0.5
 _COMBINED_ML_WEIGHT: float = 0.5
 
 
+def _patient_to_dict(patient: Patient) -> Dict[str, Any]:
+    """Convert a Patient ORM object to the dict format expected by eligibility/ML modules."""
+    return {
+        "id": patient.id,
+        "first_name": patient.first_name,
+        "last_name": patient.last_name,
+        "date_of_birth": patient.date_of_birth,
+        "gender": patient.gender,
+        "conditions": patient.conditions or [],
+        "medications": patient.medications or [],
+    }
+
+
+def _trial_to_dict(trial: Trial) -> Dict[str, Any]:
+    """Convert a Trial ORM object to the dict format expected by eligibility modules."""
+    return {
+        "id": trial.id,
+        "inclusion_criteria": trial.inclusion_criteria or [],
+        "exclusion_criteria": trial.exclusion_criteria or [],
+    }
+
+
 def _compute_combined_score(rule_score: float, ml_score: float) -> float:
     """Compute the weighted blend of rule-based and ML match scores.
 
