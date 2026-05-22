@@ -268,6 +268,23 @@ def metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
     }
 
 
+@app.get("/summary", tags=["Meta"])
+def summary(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Return aggregate summary statistics across patients, trials, and matches."""
+    from sqlalchemy import func
+    gender_rows = db.query(Patient.gender, func.count(Patient.id)).group_by(Patient.gender).all()
+    phase_rows = db.query(Trial.phase, func.count(Trial.id)).group_by(Trial.phase).all()
+    status_rows = (
+        db.query(PatientTrialMatch.match_status, func.count(PatientTrialMatch.id))
+        .group_by(PatientTrialMatch.match_status).all()
+    )
+    return {
+        "patients_by_gender": {g: c for g, c in gender_rows},
+        "trials_by_phase": {p: c for p, c in phase_rows},
+        "matches_by_status": {s: c for s, c in status_rows},
+    }
+
+
 # ------------------------------------------------------------------
 # Patients
 # ------------------------------------------------------------------
