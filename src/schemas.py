@@ -137,6 +137,36 @@ class TrialResponse(BaseModel):
         from_attributes = True
 
 
+class PatientUpdate(BaseModel):
+    """Schema for partial patient record updates (all fields optional)."""
+
+    first_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    date_of_birth: Optional[datetime] = None
+    gender: Optional[str] = Field(default=None, min_length=1, max_length=20)
+    email: Optional[str] = Field(default=None, max_length=255)
+    phone: Optional[str] = Field(default=None, max_length=20)
+    postal_code: Optional[str] = Field(default=None, max_length=10)
+    conditions: Optional[List[Dict[str, Any]]] = None
+    medications: Optional[List[Dict[str, Any]]] = None
+    allergies: Optional[List[Dict[str, Any]]] = None
+
+
+class TrialUpdate(BaseModel):
+    """Schema for partial trial record updates (all fields optional)."""
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    sponsor: Optional[str] = Field(default=None, max_length=255)
+    phase: Optional[str] = Field(default=None, min_length=1, max_length=10)
+    primary_condition: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    target_enrollment: Optional[int] = Field(default=None, gt=0)
+    inclusion_criteria: Optional[List[Dict[str, Any]]] = None
+    exclusion_criteria: Optional[List[Dict[str, Any]]] = None
+    start_date: Optional[datetime] = None
+    completion_date: Optional[datetime] = None
+
+
 class MatchResponse(BaseModel):
     """Schema for patient-trial match records returned by the API."""
 
@@ -167,8 +197,10 @@ class ClinicalNoteRequest(BaseModel):
 
 __all__ = [
     "PatientCreate",
+    "PatientUpdate",
     "PatientResponse",
     "TrialCreate",
+    "TrialUpdate",
     "TrialResponse",
     "MatchResponse",
     "ClinicalNoteRequest",
