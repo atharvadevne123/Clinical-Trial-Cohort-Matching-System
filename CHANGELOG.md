@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-05-22
+
+### Added
+- `DELETE /patients/{id}` and `DELETE /trials/{id}` endpoints for record removal.
+- `PATCH /patients/{id}` and `PATCH /trials/{id}` endpoints for partial updates.
+- `POST /patients/bulk` (up to 100) and `POST /trials/bulk` (up to 50) batch creation endpoints.
+- `GET /matches` endpoint to list all match records with optional status filter and pagination.
+- `GET /patients/{id}/eligible-trials` endpoint returning matched trial IDs.
+- `GET /summary` endpoint with aggregated patient-by-gender, trials-by-phase, matches-by-status.
+- `GET /ping` ultra-lightweight liveness probe returning `{"ping": "pong"}`.
+- `GET /readyz` database readiness probe querying the DB.
+- `POST /monitoring/set-reference` endpoint to set reference distribution for drift detection.
+- `GZipMiddleware` for automatic response compression (>1 KB).
+- `CORS_ORIGINS` env var for configurable allowed origins (default `*`).
+- `X-Process-Time-Ms` header added to all responses via middleware.
+- OpenAPI tags metadata with descriptions for all endpoint groups.
+- Startup banner log message with version, DB type, and CORS config.
+- `PatientUpdate` and `TrialUpdate` Pydantic schemas for partial update validation.
+- `MatchStatus` enum (`PENDING`, `ELIGIBLE`, `INELIGIBLE`, `ENROLLED`, `WITHDRAWN`) in models.
+- `DriftResult` and `SummaryResult` TypedDicts in `monitoring.py`.
+- `validate_patient_medications` and `validate_criteria_list` functions in `validators.py`.
+- Exponential-backoff retry logic (`_get_with_retry`) in FHIR client.
+- `_patient_to_dict` and `_trial_to_dict` helpers extracted in `main.py`.
+- Monitoring router now properly included in the main FastAPI app.
+- `val_samples` field added to successful retraining pipeline result.
+
+### Fixed
+- Test isolation bug: `app.dependency_overrides.clear()` replaced with `.pop(get_db, None)`.
+- `Trial.recruitment_status` attribute reference corrected to `Trial.status`.
+- FHIR client now uses specific `httpx.ConnectError`/`httpx.TimeoutException` instead of bare `except`.
+- OSError handling added for model persistence failures in retraining pipeline.
+- `send_recruitment_email` now catches `smtplib.SMTPException` and `OSError` specifically.
+
+### Changed
+- Version bumped to `1.2.0` in `pyproject.toml`, `src/__init__.py`, and `src/main.py`.
+
 ## [1.1.0] - 2026-05-19
 
 ### Added
