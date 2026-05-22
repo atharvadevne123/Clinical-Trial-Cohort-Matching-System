@@ -28,7 +28,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Lint with ruff
-        run: ruff check . --select E,F,W,I --ignore E501
+        run: |
+          ruff check . --select E,F,W,I --ignore E501
+          ruff format --check .
 
       - name: Run tests with coverage
         run: |
@@ -40,6 +42,21 @@ jobs:
             --ignore=tests/test_integration_e2e.py
         env:
           DATABASE_URL: sqlite:///./test.db
+
+      - name: Smoke test key endpoints
+        if: matrix.python-version == '3.11'
+        run: |
+          python -c "
+          from fastapi.testclient import TestClient
+          from src.main import app
+          client = TestClient(app)
+          for path in ['/ping', '/health', '/readyz', '/summary', '/matches', '/version']:
+              r = client.get(path)
+              assert r.status_code == 200, f'{path} returned {r.status_code}'
+              print(f'OK {path}')
+          "
+        env:
+          DATABASE_URL: sqlite:///./smoke.db
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
