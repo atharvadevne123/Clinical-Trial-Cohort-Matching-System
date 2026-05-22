@@ -23,7 +23,9 @@ class TestMatchStatusEnum:
         assert MatchStatus.ELIGIBLE == "ELIGIBLE"
         assert MatchStatus.INELIGIBLE == "INELIGIBLE"
 
-    @pytest.mark.parametrize("status", ["PENDING", "ELIGIBLE", "INELIGIBLE", "ENROLLED", "WITHDRAWN"])
+    @pytest.mark.parametrize(
+        "status", ["PENDING", "ELIGIBLE", "INELIGIBLE", "ENROLLED", "WITHDRAWN"]
+    )
     def test_all_statuses_constructable_from_string(self, status):
         assert MatchStatus(status).value == status
 
@@ -38,8 +40,16 @@ class TestMatchStatusEnum:
 class TestPatientModelDefaults:
     def test_patient_created_at_is_set(self, db_session):
         from src.models import Patient
-        p = Patient(id="MEXT_001", first_name="A", last_name="B", gender="male",
-                    conditions=[], medications=[], allergies=[])
+
+        p = Patient(
+            id="MEXT_001",
+            first_name="A",
+            last_name="B",
+            gender="male",
+            conditions=[],
+            medications=[],
+            allergies=[],
+        )
         db_session.add(p)
         db_session.commit()
         assert p.created_at is not None
@@ -48,9 +58,16 @@ class TestPatientModelDefaults:
 
     def test_trial_default_status_is_recruiting(self, db_session):
         from src.models import Trial
-        t = Trial(id="MEXT_T001", name="Test", phase="Phase 1",
-                  primary_condition="X", target_enrollment=10,
-                  inclusion_criteria=[], exclusion_criteria=[])
+
+        t = Trial(
+            id="MEXT_T001",
+            name="Test",
+            phase="Phase 1",
+            primary_condition="X",
+            target_enrollment=10,
+            inclusion_criteria=[],
+            exclusion_criteria=[],
+        )
         db_session.add(t)
         db_session.commit()
         assert t.status == "RECRUITING"

@@ -23,7 +23,11 @@ v1_router = APIRouter(prefix="/api/v1", tags=["API v1"])
 @v1_router.get("/health", summary="Versioned liveness probe")
 def v1_health() -> Dict[str, str]:
     """Return healthy status for the v1 API."""
-    return {"status": "healthy", "version": "v1", "timestamp": datetime.datetime.utcnow().isoformat()}
+    return {
+        "status": "healthy",
+        "version": "v1",
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+    }
 
 
 @v1_router.get("/patients", response_model=List[PatientResponse], summary="List patients (v1)")

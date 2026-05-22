@@ -57,21 +57,21 @@ class EligibilityMatcher:
                 violated_exclusion.append(criterion)
 
         inclusion_score: float = (
-            len(matched_inclusion) / len(inclusion_criteria) * 100
-            if inclusion_criteria else 100.0
+            len(matched_inclusion) / len(inclusion_criteria) * 100 if inclusion_criteria else 100.0
         )
         exclusion_score: float = (
             (1 - len(violated_exclusion) / len(exclusion_criteria)) * 100
-            if exclusion_criteria else 100.0
+            if exclusion_criteria
+            else 100.0
         )
 
         match_score: float = round(
             (inclusion_score * _INCLUSION_WEIGHT) + (exclusion_score * _EXCLUSION_WEIGHT), 1
         )
 
-        is_eligible: bool = (
-            len(matched_inclusion) == len(inclusion_criteria)
-        ) and len(violated_exclusion) == 0
+        is_eligible: bool = (len(matched_inclusion) == len(inclusion_criteria)) and len(
+            violated_exclusion
+        ) == 0
 
         if inclusion_criteria:
             reasons.append(
@@ -133,11 +133,11 @@ class EligibilityMatcher:
             return self._calculate_age(patient)
 
         if field.startswith("condition:"):
-            code = field[len("condition:"):]
+            code = field[len("condition:") :]
             return self._find_condition_code(patient, code)
 
         if field.startswith("medication:"):
-            code = field[len("medication:"):]
+            code = field[len("medication:") :]
             return self._find_medication_code(patient, code)
 
         if "." in field:
@@ -320,5 +320,15 @@ __all__ = [
 ]
 
 SUPPORTED_OPERATORS: List[str] = [
-    "EQ", "GT", "LT", "GTE", "LTE", "IN", "NOT_IN", "CONTAINS", "BETWEEN", "EXISTS", "NOT_EXISTS",
+    "EQ",
+    "GT",
+    "LT",
+    "GTE",
+    "LTE",
+    "IN",
+    "NOT_IN",
+    "CONTAINS",
+    "BETWEEN",
+    "EXISTS",
+    "NOT_EXISTS",
 ]

@@ -50,7 +50,9 @@ class TestSendRecruitmentEmailErrors:
         captured = {}
         with patch("src.recruitment.smtplib.SMTP") as mock_smtp:
             mock_server = MagicMock()
-            mock_server.send_message.side_effect = lambda msg: captured.update({"subject": msg["Subject"]})
+            mock_server.send_message.side_effect = lambda msg: captured.update(
+                {"subject": msg["Subject"]}
+            )
             mock_smtp.return_value.__enter__ = lambda s: mock_server
             mock_smtp.return_value.__exit__ = MagicMock(return_value=False)
             engine.send_recruitment_email(self.CANDIDATE)
@@ -65,18 +67,23 @@ class TestSendRecruitmentEmailErrors:
         call_kwargs = mock_smtp.call_args
         assert call_kwargs is not None
 
-    @pytest.mark.parametrize("score,expected_pct", [
-        (1.0, "100%"),
-        (0.5, "50%"),
-        (0.0, "0%"),
-    ])
+    @pytest.mark.parametrize(
+        "score,expected_pct",
+        [
+            (1.0, "100%"),
+            (0.5, "50%"),
+            (0.0, "0%"),
+        ],
+    )
     def test_email_body_contains_match_probability(self, score, expected_pct):
         engine = RecruitmentEngine()
         candidate = {**self.CANDIDATE, "score": score}
         captured = {}
         with patch("src.recruitment.smtplib.SMTP") as mock_smtp:
+
             def capture(msg):
                 captured["body"] = msg.get_payload()
+
             mock_server = MagicMock()
             mock_server.send_message.side_effect = capture
             mock_smtp.return_value.__enter__ = lambda s: mock_server

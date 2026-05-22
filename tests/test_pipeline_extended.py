@@ -38,10 +38,13 @@ class TestPipelineOSErrorHandling:
         result = pipeline.run(X, y)
         assert result["status"] == "skipped"
 
-    @pytest.mark.parametrize("min_samples,n_samples,expected_status", [
-        (500, 100, "skipped"),
-        (10, 100, "success"),
-    ])
+    @pytest.mark.parametrize(
+        "min_samples,n_samples,expected_status",
+        [
+            (500, 100, "skipped"),
+            (10, 100, "success"),
+        ],
+    )
     def test_min_samples_threshold_controls_skip(self, min_samples, n_samples, expected_status):
         p = RetrainingPipeline(min_samples=min_samples)
         X, y = p.generate_synthetic_data(n_samples)
@@ -58,4 +61,5 @@ class TestPipelineOSErrorHandling:
         result = pipeline.run(X, y)
         assert "timestamp" in result
         from datetime import datetime
+
         datetime.fromisoformat(result["timestamp"].replace("Z", "+00:00"))

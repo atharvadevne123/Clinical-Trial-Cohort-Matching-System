@@ -37,10 +37,13 @@ class TestPatientUpdateSchema:
         update = PatientUpdate(conditions=[{"code": "I10", "name": "HTN"}])
         assert len(update.conditions) == 1
 
-    @pytest.mark.parametrize("name,length", [
-        ("first_name", 1),
-        ("last_name", 1),
-    ])
+    @pytest.mark.parametrize(
+        "name,length",
+        [
+            ("first_name", 1),
+            ("last_name", 1),
+        ],
+    )
     def test_min_length_enforced(self, name, length):
         with pytest.raises(ValidationError):
             PatientUpdate(**{name: ""})

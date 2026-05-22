@@ -32,147 +32,274 @@ logger = logging.getLogger(__name__)
 _RNG = random.Random(42)
 
 FIRST_NAMES_M = [
-    "James", "John", "Robert", "Michael", "William", "David", "Richard",
-    "Joseph", "Thomas", "Charles", "Christopher", "Daniel", "Matthew",
-    "Anthony", "Donald", "Mark", "Paul", "Steven", "Andrew", "Kenneth",
-    "George", "Joshua", "Kevin", "Brian", "Edward", "Ronald", "Timothy",
-    "Jason", "Jeffrey", "Ryan", "Gary", "Jacob", "Nicholas", "Eric",
-    "Jonathan", "Stephen", "Larry", "Justin", "Scott", "Brandon",
+    "James",
+    "John",
+    "Robert",
+    "Michael",
+    "William",
+    "David",
+    "Richard",
+    "Joseph",
+    "Thomas",
+    "Charles",
+    "Christopher",
+    "Daniel",
+    "Matthew",
+    "Anthony",
+    "Donald",
+    "Mark",
+    "Paul",
+    "Steven",
+    "Andrew",
+    "Kenneth",
+    "George",
+    "Joshua",
+    "Kevin",
+    "Brian",
+    "Edward",
+    "Ronald",
+    "Timothy",
+    "Jason",
+    "Jeffrey",
+    "Ryan",
+    "Gary",
+    "Jacob",
+    "Nicholas",
+    "Eric",
+    "Jonathan",
+    "Stephen",
+    "Larry",
+    "Justin",
+    "Scott",
+    "Brandon",
 ]
 
 FIRST_NAMES_F = [
-    "Mary", "Patricia", "Jennifer", "Linda", "Barbara", "Elizabeth",
-    "Susan", "Jessica", "Sarah", "Karen", "Lisa", "Nancy", "Betty",
-    "Margaret", "Sandra", "Ashley", "Emily", "Dorothy", "Kimberly",
-    "Carol", "Michelle", "Amanda", "Melissa", "Deborah", "Stephanie",
-    "Rebecca", "Sharon", "Laura", "Cynthia", "Kathleen", "Amy",
-    "Angela", "Shirley", "Anna", "Brenda", "Pamela", "Emma",
-    "Nicole", "Helen", "Samantha",
+    "Mary",
+    "Patricia",
+    "Jennifer",
+    "Linda",
+    "Barbara",
+    "Elizabeth",
+    "Susan",
+    "Jessica",
+    "Sarah",
+    "Karen",
+    "Lisa",
+    "Nancy",
+    "Betty",
+    "Margaret",
+    "Sandra",
+    "Ashley",
+    "Emily",
+    "Dorothy",
+    "Kimberly",
+    "Carol",
+    "Michelle",
+    "Amanda",
+    "Melissa",
+    "Deborah",
+    "Stephanie",
+    "Rebecca",
+    "Sharon",
+    "Laura",
+    "Cynthia",
+    "Kathleen",
+    "Amy",
+    "Angela",
+    "Shirley",
+    "Anna",
+    "Brenda",
+    "Pamela",
+    "Emma",
+    "Nicole",
+    "Helen",
+    "Samantha",
 ]
 
 LAST_NAMES = [
-    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller",
-    "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez",
-    "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
-    "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark",
-    "Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King",
-    "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores", "Green",
-    "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell",
-    "Carter", "Roberts",
+    "Smith",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Garcia",
+    "Miller",
+    "Davis",
+    "Rodriguez",
+    "Martinez",
+    "Hernandez",
+    "Lopez",
+    "Gonzalez",
+    "Wilson",
+    "Anderson",
+    "Thomas",
+    "Taylor",
+    "Moore",
+    "Jackson",
+    "Martin",
+    "Lee",
+    "Perez",
+    "Thompson",
+    "White",
+    "Harris",
+    "Sanchez",
+    "Clark",
+    "Ramirez",
+    "Lewis",
+    "Robinson",
+    "Walker",
+    "Young",
+    "Allen",
+    "King",
+    "Wright",
+    "Scott",
+    "Torres",
+    "Nguyen",
+    "Hill",
+    "Flores",
+    "Green",
+    "Adams",
+    "Nelson",
+    "Baker",
+    "Hall",
+    "Rivera",
+    "Campbell",
+    "Mitchell",
+    "Carter",
+    "Roberts",
 ]
 
 POSTAL_CODES = [
-    "10001", "10002", "90210", "60601", "77001", "30301", "98101",
-    "85001", "94101", "02101", "20001", "33101", "48201", "55401",
-    "80201", "37201", "23219", "45202", "46204", "73102",
+    "10001",
+    "10002",
+    "90210",
+    "60601",
+    "77001",
+    "30301",
+    "98101",
+    "85001",
+    "94101",
+    "02101",
+    "20001",
+    "33101",
+    "48201",
+    "55401",
+    "80201",
+    "37201",
+    "23219",
+    "45202",
+    "46204",
+    "73102",
 ]
 
 # condition key -> {icd10_code, display}
 CONDITIONS = {
-    "hypertension":              {"icd10_code": "I10",    "display": "Essential Hypertension"},
-    "type2_diabetes":            {"icd10_code": "E11",    "display": "Type 2 Diabetes Mellitus"},
-    "atrial_fibrillation":       {"icd10_code": "I48.91", "display": "Atrial Fibrillation"},
-    "heart_failure":             {"icd10_code": "I50",    "display": "Heart Failure"},
-    "ckd":                       {"icd10_code": "N18",    "display": "Chronic Kidney Disease"},
-    "copd":                      {"icd10_code": "J44",    "display": "COPD"},
-    "asthma":                    {"icd10_code": "J45",    "display": "Asthma"},
-    "breast_cancer":             {"icd10_code": "C50",    "display": "Breast Cancer"},
-    "prostate_cancer":           {"icd10_code": "C61",    "display": "Prostate Cancer"},
-    "colorectal_cancer":         {"icd10_code": "C18",    "display": "Colorectal Cancer"},
-    "lung_cancer":               {"icd10_code": "C34",    "display": "Lung Cancer"},
-    "alzheimers":                {"icd10_code": "G30",    "display": "Alzheimer's Disease"},
-    "depression":                {"icd10_code": "F32",    "display": "Major Depressive Disorder"},
-    "obesity":                   {"icd10_code": "E66",    "display": "Obesity"},
-    "stroke":                    {"icd10_code": "I63",    "display": "Ischemic Stroke"},
-    "osteoporosis":              {"icd10_code": "M81",    "display": "Osteoporosis"},
-    "nafld":                     {"icd10_code": "K76.0",  "display": "Non-Alcoholic Fatty Liver Disease"},
-    "peripheral_artery_disease": {"icd10_code": "I73.9",  "display": "Peripheral Artery Disease"},
-    "rheumatoid_arthritis":      {"icd10_code": "M05",    "display": "Rheumatoid Arthritis"},
-    "multiple_sclerosis":        {"icd10_code": "G35",    "display": "Multiple Sclerosis"},
-    "migraine":                  {"icd10_code": "G43",    "display": "Migraine"},
-    "insomnia":                  {"icd10_code": "G47.00", "display": "Insomnia"},
-    "pulmonary_hypertension":    {"icd10_code": "I27.0",  "display": "Pulmonary Arterial Hypertension"},
+    "hypertension": {"icd10_code": "I10", "display": "Essential Hypertension"},
+    "type2_diabetes": {"icd10_code": "E11", "display": "Type 2 Diabetes Mellitus"},
+    "atrial_fibrillation": {"icd10_code": "I48.91", "display": "Atrial Fibrillation"},
+    "heart_failure": {"icd10_code": "I50", "display": "Heart Failure"},
+    "ckd": {"icd10_code": "N18", "display": "Chronic Kidney Disease"},
+    "copd": {"icd10_code": "J44", "display": "COPD"},
+    "asthma": {"icd10_code": "J45", "display": "Asthma"},
+    "breast_cancer": {"icd10_code": "C50", "display": "Breast Cancer"},
+    "prostate_cancer": {"icd10_code": "C61", "display": "Prostate Cancer"},
+    "colorectal_cancer": {"icd10_code": "C18", "display": "Colorectal Cancer"},
+    "lung_cancer": {"icd10_code": "C34", "display": "Lung Cancer"},
+    "alzheimers": {"icd10_code": "G30", "display": "Alzheimer's Disease"},
+    "depression": {"icd10_code": "F32", "display": "Major Depressive Disorder"},
+    "obesity": {"icd10_code": "E66", "display": "Obesity"},
+    "stroke": {"icd10_code": "I63", "display": "Ischemic Stroke"},
+    "osteoporosis": {"icd10_code": "M81", "display": "Osteoporosis"},
+    "nafld": {"icd10_code": "K76.0", "display": "Non-Alcoholic Fatty Liver Disease"},
+    "peripheral_artery_disease": {"icd10_code": "I73.9", "display": "Peripheral Artery Disease"},
+    "rheumatoid_arthritis": {"icd10_code": "M05", "display": "Rheumatoid Arthritis"},
+    "multiple_sclerosis": {"icd10_code": "G35", "display": "Multiple Sclerosis"},
+    "migraine": {"icd10_code": "G43", "display": "Migraine"},
+    "insomnia": {"icd10_code": "G47.00", "display": "Insomnia"},
+    "pulmonary_hypertension": {"icd10_code": "I27.0", "display": "Pulmonary Arterial Hypertension"},
 }
 
 # medication key -> {code, display}
 MEDICATIONS = {
-    "metformin":         {"code": "A10BA02", "display": "Metformin"},
-    "insulin":           {"code": "A10AB01", "display": "Insulin Glargine"},
-    "lisinopril":        {"code": "C09AA01", "display": "Lisinopril"},
-    "amlodipine":        {"code": "C08CA01", "display": "Amlodipine"},
-    "atorvastatin":      {"code": "C10AA05", "display": "Atorvastatin"},
-    "warfarin":          {"code": "B01AA03", "display": "Warfarin"},
-    "apixaban":          {"code": "B01AF02", "display": "Apixaban"},
-    "aspirin":           {"code": "N02BA01", "display": "Aspirin 81 mg"},
-    "furosemide":        {"code": "C03CA01", "display": "Furosemide"},
-    "metoprolol":        {"code": "C07AB02", "display": "Metoprolol Succinate"},
-    "omeprazole":        {"code": "A02BC01", "display": "Omeprazole"},
-    "sertraline":        {"code": "N06AB06", "display": "Sertraline"},
-    "levothyroxine":     {"code": "H03AA01", "display": "Levothyroxine"},
-    "albuterol":         {"code": "R03AC02", "display": "Albuterol Inhaler"},
-    "prednisone":        {"code": "H02AB07", "display": "Prednisone"},
-    "methotrexate":      {"code": "L01BA01", "display": "Methotrexate"},
-    "adalimumab":        {"code": "L04AB04", "display": "Adalimumab"},
-    "sumatriptan":       {"code": "N02CC01", "display": "Sumatriptan"},
-    "topiramate":        {"code": "N03AX11", "display": "Topiramate"},
-    "spironolactone":    {"code": "C03DA01", "display": "Spironolactone"},
-    "rivaroxaban":       {"code": "B01AF01", "display": "Rivaroxaban"},
-    "empagliflozin":     {"code": "A10BK03", "display": "Empagliflozin"},
-    "semaglutide":       {"code": "A10BJ06", "display": "Semaglutide"},
-    "bisoprolol":        {"code": "C07AB07", "display": "Bisoprolol"},
+    "metformin": {"code": "A10BA02", "display": "Metformin"},
+    "insulin": {"code": "A10AB01", "display": "Insulin Glargine"},
+    "lisinopril": {"code": "C09AA01", "display": "Lisinopril"},
+    "amlodipine": {"code": "C08CA01", "display": "Amlodipine"},
+    "atorvastatin": {"code": "C10AA05", "display": "Atorvastatin"},
+    "warfarin": {"code": "B01AA03", "display": "Warfarin"},
+    "apixaban": {"code": "B01AF02", "display": "Apixaban"},
+    "aspirin": {"code": "N02BA01", "display": "Aspirin 81 mg"},
+    "furosemide": {"code": "C03CA01", "display": "Furosemide"},
+    "metoprolol": {"code": "C07AB02", "display": "Metoprolol Succinate"},
+    "omeprazole": {"code": "A02BC01", "display": "Omeprazole"},
+    "sertraline": {"code": "N06AB06", "display": "Sertraline"},
+    "levothyroxine": {"code": "H03AA01", "display": "Levothyroxine"},
+    "albuterol": {"code": "R03AC02", "display": "Albuterol Inhaler"},
+    "prednisone": {"code": "H02AB07", "display": "Prednisone"},
+    "methotrexate": {"code": "L01BA01", "display": "Methotrexate"},
+    "adalimumab": {"code": "L04AB04", "display": "Adalimumab"},
+    "sumatriptan": {"code": "N02CC01", "display": "Sumatriptan"},
+    "topiramate": {"code": "N03AX11", "display": "Topiramate"},
+    "spironolactone": {"code": "C03DA01", "display": "Spironolactone"},
+    "rivaroxaban": {"code": "B01AF01", "display": "Rivaroxaban"},
+    "empagliflozin": {"code": "A10BK03", "display": "Empagliflozin"},
+    "semaglutide": {"code": "A10BJ06", "display": "Semaglutide"},
+    "bisoprolol": {"code": "C07AB07", "display": "Bisoprolol"},
     "hydrochlorothiazide": {"code": "C03AA03", "display": "Hydrochlorothiazide"},
 }
 
 # condition -> typical medications (1–2 chosen at random)
 CONDITION_MEDS = {
-    "hypertension":              ["lisinopril", "amlodipine", "metoprolol", "hydrochlorothiazide", "bisoprolol"],
-    "type2_diabetes":            ["metformin", "insulin", "empagliflozin", "semaglutide"],
-    "atrial_fibrillation":       ["warfarin", "apixaban", "rivaroxaban", "metoprolol", "bisoprolol"],
-    "heart_failure":             ["furosemide", "metoprolol", "lisinopril", "spironolactone", "bisoprolol"],
-    "ckd":                       ["furosemide", "lisinopril", "spironolactone"],
-    "copd":                      ["albuterol", "prednisone"],
-    "asthma":                    ["albuterol", "prednisone"],
-    "breast_cancer":             ["prednisone", "methotrexate"],
-    "prostate_cancer":           ["prednisone"],
-    "colorectal_cancer":         ["prednisone"],
-    "lung_cancer":               ["prednisone"],
-    "depression":                ["sertraline"],
-    "rheumatoid_arthritis":      ["methotrexate", "adalimumab", "prednisone"],
-    "migraine":                  ["sumatriptan", "topiramate"],
-    "obesity":                   ["semaglutide"],
+    "hypertension": ["lisinopril", "amlodipine", "metoprolol", "hydrochlorothiazide", "bisoprolol"],
+    "type2_diabetes": ["metformin", "insulin", "empagliflozin", "semaglutide"],
+    "atrial_fibrillation": ["warfarin", "apixaban", "rivaroxaban", "metoprolol", "bisoprolol"],
+    "heart_failure": ["furosemide", "metoprolol", "lisinopril", "spironolactone", "bisoprolol"],
+    "ckd": ["furosemide", "lisinopril", "spironolactone"],
+    "copd": ["albuterol", "prednisone"],
+    "asthma": ["albuterol", "prednisone"],
+    "breast_cancer": ["prednisone", "methotrexate"],
+    "prostate_cancer": ["prednisone"],
+    "colorectal_cancer": ["prednisone"],
+    "lung_cancer": ["prednisone"],
+    "depression": ["sertraline"],
+    "rheumatoid_arthritis": ["methotrexate", "adalimumab", "prednisone"],
+    "migraine": ["sumatriptan", "topiramate"],
+    "obesity": ["semaglutide"],
 }
 
 # condition key -> (prevalence_fraction, min_age, gender_restriction)
 # prevalence is per-patient probability given age >= min_age
 CONDITION_PROBS = [
-    ("hypertension",              0.40, 35,  None),
-    ("type2_diabetes",            0.18, 30,  None),
-    ("atrial_fibrillation",       0.08, 50,  None),
-    ("heart_failure",             0.05, 55,  None),
-    ("ckd",                       0.12, 45,  None),
-    ("copd",                      0.07, 45,  None),
-    ("asthma",                    0.08, 18,  None),
-    ("breast_cancer",             0.04, 40,  "female"),
-    ("prostate_cancer",           0.06, 50,  "male"),
-    ("colorectal_cancer",         0.02, 45,  None),
-    ("lung_cancer",               0.02, 50,  None),
-    ("alzheimers",                0.05, 65,  None),
-    ("depression",                0.10, 18,  None),
-    ("obesity",                   0.30, 18,  None),
-    ("stroke",                    0.03, 55,  None),
-    ("osteoporosis",              0.08, 55,  None),
-    ("nafld",                     0.12, 30,  None),
-    ("peripheral_artery_disease", 0.04, 50,  None),
-    ("rheumatoid_arthritis",      0.03, 30,  None),
-    ("multiple_sclerosis",        0.01, 20,  None),
-    ("migraine",                  0.10, 18,  None),
-    ("insomnia",                  0.12, 18,  None),
-    ("pulmonary_hypertension",    0.01, 30,  None),
+    ("hypertension", 0.40, 35, None),
+    ("type2_diabetes", 0.18, 30, None),
+    ("atrial_fibrillation", 0.08, 50, None),
+    ("heart_failure", 0.05, 55, None),
+    ("ckd", 0.12, 45, None),
+    ("copd", 0.07, 45, None),
+    ("asthma", 0.08, 18, None),
+    ("breast_cancer", 0.04, 40, "female"),
+    ("prostate_cancer", 0.06, 50, "male"),
+    ("colorectal_cancer", 0.02, 45, None),
+    ("lung_cancer", 0.02, 50, None),
+    ("alzheimers", 0.05, 65, None),
+    ("depression", 0.10, 18, None),
+    ("obesity", 0.30, 18, None),
+    ("stroke", 0.03, 55, None),
+    ("osteoporosis", 0.08, 55, None),
+    ("nafld", 0.12, 30, None),
+    ("peripheral_artery_disease", 0.04, 50, None),
+    ("rheumatoid_arthritis", 0.03, 30, None),
+    ("multiple_sclerosis", 0.01, 20, None),
+    ("migraine", 0.10, 18, None),
+    ("insomnia", 0.12, 18, None),
+    ("pulmonary_hypertension", 0.01, 30, None),
 ]
 
 # ------------------------------------------------------------------
 # Trial definitions
 # ------------------------------------------------------------------
+
 
 def _dt(year: int, month: int, day: int) -> datetime:
     return datetime(year, month, day, tzinfo=timezone.utc)
@@ -651,7 +778,7 @@ TRIALS = [
         "completion_date": _dt(2027, 8, 31),
         "inclusion_criteria": [
             {"field": "condition:I48.91", "operator": "EXISTS", "value": None},
-            {"field": "condition:I50",    "operator": "EXISTS", "value": None},
+            {"field": "condition:I50", "operator": "EXISTS", "value": None},
             {"field": "age", "operator": "GTE", "value": 40},
             {"field": "age", "operator": "LTE", "value": 75},
         ],
@@ -665,6 +792,7 @@ TRIALS = [
 # ------------------------------------------------------------------
 # Patient generation
 # ------------------------------------------------------------------
+
 
 def _age_to_dob(age: int) -> datetime:
     """Convert an integer age to an approximate date of birth."""
@@ -696,11 +824,13 @@ def _build_conditions(age: int, gender: str) -> list:
             continue
         if _RNG.random() < prob:
             cdef = CONDITIONS[ckey]
-            conditions.append({
-                "code": cdef["icd10_code"],
-                "icd10_code": cdef["icd10_code"],
-                "display": cdef["display"],
-            })
+            conditions.append(
+                {
+                    "code": cdef["icd10_code"],
+                    "icd10_code": cdef["icd10_code"],
+                    "display": cdef["display"],
+                }
+            )
     return conditions
 
 
@@ -722,7 +852,11 @@ def _build_medications(conditions: list) -> list:
         mkey = _RNG.choice(list(MEDICATIONS.keys()))
         if mkey not in meds_chosen:
             mdef = MEDICATIONS[mkey]
-            meds_chosen[mkey] = {"code": mdef["code"], "medication_code": mdef["code"], "display": mdef["display"]}
+            meds_chosen[mkey] = {
+                "code": mdef["code"],
+                "medication_code": mdef["code"],
+                "display": mdef["display"],
+            }
     return list(meds_chosen.values())
 
 
@@ -741,25 +875,28 @@ def _generate_patients(n: int = 300) -> list:
         conds = _build_conditions(age, gender)
         meds = _build_medications(conds)
 
-        patients.append({
-            "id": f"PT{i:04d}",
-            "first_name": first_name,
-            "last_name": last_name,
-            "date_of_birth": dob,
-            "gender": gender,
-            "email": f"{first_name.lower()}.{last_name.lower()}{i}@example.com",
-            "phone": f"555-{_RNG.randint(1000, 9999)}",
-            "postal_code": _RNG.choice(POSTAL_CODES),
-            "conditions": conds,
-            "medications": meds,
-            "created_at": created_at,
-        })
+        patients.append(
+            {
+                "id": f"PT{i:04d}",
+                "first_name": first_name,
+                "last_name": last_name,
+                "date_of_birth": dob,
+                "gender": gender,
+                "email": f"{first_name.lower()}.{last_name.lower()}{i}@example.com",
+                "phone": f"555-{_RNG.randint(1000, 9999)}",
+                "postal_code": _RNG.choice(POSTAL_CODES),
+                "conditions": conds,
+                "medications": meds,
+                "created_at": created_at,
+            }
+        )
     return patients
 
 
 # ------------------------------------------------------------------
 # Core seeding logic
 # ------------------------------------------------------------------
+
 
 def run_seed(db: Session) -> dict:
     """Insert patients, trials, and matches. Returns a stats dict."""
@@ -797,7 +934,9 @@ def run_seed(db: Session) -> dict:
         db.add(p)
         stats["patients_created"] += 1
     db.commit()
-    logger.info(f"Patients: {stats['patients_created']} created, {stats['patients_skipped']} skipped.")
+    logger.info(
+        f"Patients: {stats['patients_created']} created, {stats['patients_skipped']} skipped."
+    )
 
     # ---- Trials ----
     logger.info("Seeding trials…")
@@ -870,7 +1009,9 @@ def run_seed(db: Session) -> dict:
 
             # Spread match created_at over 18 months for time-series richness
             match_created = patient.created_at + timedelta(
-                days=_RNG.randint(0, min(540, (datetime.now(timezone.utc) - patient.created_at).days or 1))
+                days=_RNG.randint(
+                    0, min(540, (datetime.now(timezone.utc) - patient.created_at).days or 1)
+                )
             )
 
             # Simulate ~30% enrollment rate for eligible patients
@@ -889,9 +1030,13 @@ def run_seed(db: Session) -> dict:
                 violated_criteria=rule["violated_exclusion"],
                 reasons=rule["reasons"],
                 letter_sent=is_eligible,
-                letter_sent_date=match_created + timedelta(days=_RNG.randint(1, 14)) if is_eligible else None,
+                letter_sent_date=match_created + timedelta(days=_RNG.randint(1, 14))
+                if is_eligible
+                else None,
                 enrolled=enrolled,
-                enrollment_date=match_created + timedelta(days=_RNG.randint(14, 60)) if enrolled else None,
+                enrollment_date=match_created + timedelta(days=_RNG.randint(14, 60))
+                if enrolled
+                else None,
                 created_at=match_created,
                 updated_at=match_created,
             )

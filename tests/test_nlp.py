@@ -1,4 +1,5 @@
 """Tests for the clinical NLP processor."""
+
 import pytest
 
 from src.nlp import ClinicalNLPProcessor
@@ -67,11 +68,14 @@ def test_summarize_clinical_profile(nlp):
     assert profile["disease_burden"] in ("low", "moderate", "high")
 
 
-@pytest.mark.parametrize("note,expected_burden", [
-    ("Patient has hypertension.", "low"),
-    ("Patient has hypertension and diabetes.", "moderate"),
-    ("Patient has hypertension, diabetes, cancer, stroke, heart failure.", "high"),
-])
+@pytest.mark.parametrize(
+    "note,expected_burden",
+    [
+        ("Patient has hypertension.", "low"),
+        ("Patient has hypertension and diabetes.", "moderate"),
+        ("Patient has hypertension, diabetes, cancer, stroke, heart failure.", "high"),
+    ],
+)
 def test_disease_burden_levels(nlp, note, expected_burden):
     profile = nlp.summarize_clinical_profile(note)
     assert profile["disease_burden"] == expected_burden

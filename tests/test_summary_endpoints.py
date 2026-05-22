@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestSummaryEndpoint:
     def test_summary_returns_expected_keys(self, client):

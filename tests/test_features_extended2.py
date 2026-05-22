@@ -70,16 +70,24 @@ class TestBuildFeatureVector:
 class TestConditionFlags:
     def test_all_expected_flags_present(self):
         assert set(CONDITION_FLAGS.keys()) == {
-            "has_diabetes", "has_hypertension", "has_heart_disease", "has_cancer", "has_afib"
+            "has_diabetes",
+            "has_hypertension",
+            "has_heart_disease",
+            "has_cancer",
+            "has_afib",
         }
 
-    @pytest.mark.parametrize("condition,flag", [
-        ("hypertension", "has_hypertension"),
-        ("cancer", "has_cancer"),
-        ("diabetes", "has_diabetes"),
-    ])
+    @pytest.mark.parametrize(
+        "condition,flag",
+        [
+            ("hypertension", "has_hypertension"),
+            ("cancer", "has_cancer"),
+            ("diabetes", "has_diabetes"),
+        ],
+    )
     def test_flag_detected_by_keyword(self, condition, flag):
         from src.features import extract_condition_flags
+
         conditions = [{"code": "X", "name": condition}]
         flags = extract_condition_flags(conditions)
         assert flags[flag] == 1
@@ -89,14 +97,21 @@ class TestClinicalFeaturePipeline:
     def test_fit_transform_returns_correct_shape(self):
         patients = [
             {"date_of_birth": "1970-01-01", "gender": "male", "conditions": [], "medications": []},
-            {"date_of_birth": "1990-05-10", "gender": "female", "conditions": [], "medications": []},
+            {
+                "date_of_birth": "1990-05-10",
+                "gender": "female",
+                "conditions": [],
+                "medications": [],
+            },
         ]
         pipeline = ClinicalFeaturePipeline()
         X = pipeline.fit_transform(patients)
         assert X.shape == (2, 14)
 
     def test_transform_after_fit_returns_same_shape(self):
-        patients = [{"date_of_birth": "1975-01-01", "gender": "male", "conditions": [], "medications": []}]
+        patients = [
+            {"date_of_birth": "1975-01-01", "gender": "male", "conditions": [], "medications": []}
+        ]
         pipeline = ClinicalFeaturePipeline()
         pipeline.fit_transform(patients)
         X = pipeline.transform(patients)

@@ -50,8 +50,7 @@ _START_TIME: datetime = datetime.now(timezone.utc)
 
 if not API_KEY:
     logger.warning(
-        "API_KEY env var is not set — all endpoints are unauthenticated. "
-        "Set API_KEY in production."
+        "API_KEY env var is not set — all endpoints are unauthenticated. Set API_KEY in production."
     )
 
 
@@ -75,6 +74,7 @@ def require_api_key(key: Optional[str] = Security(_api_key_header)) -> Optional[
 # ------------------------------------------------------------------
 # Lifespan
 # ------------------------------------------------------------------
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -147,7 +147,9 @@ async def add_correlation_id(request: Request, call_next: Any) -> Response:
     response.headers["X-Correlation-ID"] = correlation_id
     response.headers["X-Request-ID"] = request_id
     response.headers["X-Process-Time-Ms"] = str(elapsed)
-    logger.debug("%s %s -> %s (%.1fms)", request.method, request.url.path, response.status_code, elapsed)
+    logger.debug(
+        "%s %s -> %s (%.1fms)", request.method, request.url.path, response.status_code, elapsed
+    )
     return response
 
 
@@ -159,12 +161,17 @@ app.include_router(monitoring_router)
 # Error handlers
 # ------------------------------------------------------------------
 
+
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
     """Return a structured JSON body for 404 Not Found responses."""
     return JSONResponse(
         status_code=404,
-        content={"error": "not_found", "detail": str(getattr(exc, "detail", "Resource not found")), "path": request.url.path},
+        content={
+            "error": "not_found",
+            "detail": str(getattr(exc, "detail", "Resource not found")),
+            "path": request.url.path,
+        },
     )
 
 
@@ -181,6 +188,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
 # DB dependency
 # ------------------------------------------------------------------
 
+
 def get_db() -> Session:
     """Yield a database session and ensure it is closed after the request."""
     db = SessionLocal()
@@ -193,6 +201,7 @@ def get_db() -> Session:
 # ------------------------------------------------------------------
 # Health / meta
 # ------------------------------------------------------------------
+
 
 @app.get("/", tags=["Meta"])
 def root() -> Dict[str, str]:
@@ -227,6 +236,7 @@ def readyz(db: Session = Depends(get_db)) -> Dict[str, Any]:
     except Exception as exc:
         logger.error("Readiness check failed: %s", exc)
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=503, content={"status": "not_ready", "database": "error"})
 
 
@@ -265,12 +275,16 @@ def status(db: Session = Depends(get_db)) -> Dict[str, Any]:
 def metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Return runtime statistics including record counts and uptime."""
     uptime_seconds = (datetime.now(timezone.utc) - _START_TIME).total_seconds()
-    eligible = db.query(PatientTrialMatch).filter(
-        PatientTrialMatch.match_status == "ELIGIBLE"
-    ).count()
-    enrolled = db.query(PatientTrialMatch).filter(
-        PatientTrialMatch.enrolled == True  # noqa: E712
-    ).count()
+    eligible = (
+        db.query(PatientTrialMatch).filter(PatientTrialMatch.match_status == "ELIGIBLE").count()
+    )
+    enrolled = (
+        db.query(PatientTrialMatch)
+        .filter(
+            PatientTrialMatch.enrolled == True  # noqa: E712
+        )
+        .count()
+    )
     return {
         "uptime_seconds": round(uptime_seconds, 1),
         "patients": db.query(Patient).count(),
@@ -285,11 +299,13 @@ def metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
 def summary(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Return aggregate summary statistics across patients, trials, and matches."""
     from sqlalchemy import func
+
     gender_rows = db.query(Patient.gender, func.count(Patient.id)).group_by(Patient.gender).all()
     phase_rows = db.query(Trial.phase, func.count(Trial.id)).group_by(Trial.phase).all()
     status_rows = (
         db.query(PatientTrialMatch.match_status, func.count(PatientTrialMatch.id))
-        .group_by(PatientTrialMatch.match_status).all()
+        .group_by(PatientTrialMatch.match_status)
+        .all()
     )
     return {
         "patients_by_gender": {g: c for g, c in gender_rows},
@@ -302,8 +318,13 @@ def summary(db: Session = Depends(get_db)) -> Dict[str, Any]:
 # Patients
 # ------------------------------------------------------------------
 
-@app.post("/patients", response_model=PatientResponse, tags=["Patients"],
-          dependencies=[Depends(require_api_key)])
+
+@app.post(
+    "/patients",
+    response_model=PatientResponse,
+    tags=["Patients"],
+    dependencies=[Depends(require_api_key)],
+)
 def create_patient(patient: PatientCreate, db: Session = Depends(get_db)) -> Patient:
     """Create a new patient record.
 
@@ -350,8 +371,12 @@ def get_patient(patient_id: str, db: Session = Depends(get_db)) -> Patient:
     return patient
 
 
-@app.patch("/patients/{patient_id}", response_model=PatientResponse, tags=["Patients"],
-           dependencies=[Depends(require_api_key)])
+@app.patch(
+    "/patients/{patient_id}",
+    response_model=PatientResponse,
+    tags=["Patients"],
+    dependencies=[Depends(require_api_key)],
+)
 def update_patient(
     patient_id: str, update: PatientUpdate, db: Session = Depends(get_db)
 ) -> Patient:
@@ -373,8 +398,7 @@ def update_patient(
     return patient
 
 
-@app.delete("/patients/{patient_id}", tags=["Patients"],
-            dependencies=[Depends(require_api_key)])
+@app.delete("/patients/{patient_id}", tags=["Patients"], dependencies=[Depends(require_api_key)])
 def delete_patient(patient_id: str, db: Session = Depends(get_db)) -> Dict[str, str]:
     """Delete a patient record by ID.
 
@@ -411,8 +435,13 @@ def list_patients(
 # Trials
 # ------------------------------------------------------------------
 
-@app.post("/trials", response_model=TrialResponse, tags=["Trials"],
-          dependencies=[Depends(require_api_key)])
+
+@app.post(
+    "/trials",
+    response_model=TrialResponse,
+    tags=["Trials"],
+    dependencies=[Depends(require_api_key)],
+)
 def create_trial(trial: TrialCreate, db: Session = Depends(get_db)) -> Trial:
     """Create a new clinical trial record.
 
@@ -455,11 +484,13 @@ def get_trial(trial_id: str, db: Session = Depends(get_db)) -> Trial:
     return trial
 
 
-@app.patch("/trials/{trial_id}", response_model=TrialResponse, tags=["Trials"],
-           dependencies=[Depends(require_api_key)])
-def update_trial(
-    trial_id: str, update: TrialUpdate, db: Session = Depends(get_db)
-) -> Trial:
+@app.patch(
+    "/trials/{trial_id}",
+    response_model=TrialResponse,
+    tags=["Trials"],
+    dependencies=[Depends(require_api_key)],
+)
+def update_trial(trial_id: str, update: TrialUpdate, db: Session = Depends(get_db)) -> Trial:
     """Partially update a clinical trial record.
 
     Only provided fields are updated; omitted fields remain unchanged.
@@ -478,8 +509,7 @@ def update_trial(
     return trial
 
 
-@app.delete("/trials/{trial_id}", tags=["Trials"],
-            dependencies=[Depends(require_api_key)])
+@app.delete("/trials/{trial_id}", tags=["Trials"], dependencies=[Depends(require_api_key)])
 def delete_trial(trial_id: str, db: Session = Depends(get_db)) -> Dict[str, str]:
     """Delete a clinical trial record by ID.
 
@@ -512,8 +542,7 @@ def list_trials(
     return q.offset(skip).limit(limit).all()
 
 
-@app.post("/patients/bulk", tags=["Patients"],
-          dependencies=[Depends(require_api_key)])
+@app.post("/patients/bulk", tags=["Patients"], dependencies=[Depends(require_api_key)])
 def bulk_create_patients(
     patients: List[PatientCreate], db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
@@ -525,32 +554,43 @@ def bulk_create_patients(
         HTTPException: 400 if more than 100 records are submitted.
     """
     if len(patients) > 100:
-        raise HTTPException(status_code=400, detail="Bulk create limited to 100 patients per request")
+        raise HTTPException(
+            status_code=400, detail="Bulk create limited to 100 patients per request"
+        )
     created_ids: List[str] = []
     skipped_ids: List[str] = []
     for p in patients:
         if db.query(Patient).filter(Patient.id == p.id).first():
             skipped_ids.append(p.id)
             continue
-        db.add(Patient(
-            id=p.id, first_name=p.first_name, last_name=p.last_name,
-            date_of_birth=p.date_of_birth, gender=p.gender,
-            email=p.email, phone=p.phone, postal_code=p.postal_code,
-            conditions=p.conditions or [], medications=p.medications or [],
-            allergies=p.allergies or [],
-        ))
+        db.add(
+            Patient(
+                id=p.id,
+                first_name=p.first_name,
+                last_name=p.last_name,
+                date_of_birth=p.date_of_birth,
+                gender=p.gender,
+                email=p.email,
+                phone=p.phone,
+                postal_code=p.postal_code,
+                conditions=p.conditions or [],
+                medications=p.medications or [],
+                allergies=p.allergies or [],
+            )
+        )
         created_ids.append(p.id)
     db.commit()
     logger.info("Bulk created %d patients, skipped %d", len(created_ids), len(skipped_ids))
-    return {"created": len(created_ids), "skipped": len(skipped_ids),
-            "created_ids": created_ids, "skipped_ids": skipped_ids}
+    return {
+        "created": len(created_ids),
+        "skipped": len(skipped_ids),
+        "created_ids": created_ids,
+        "skipped_ids": skipped_ids,
+    }
 
 
-@app.post("/trials/bulk", tags=["Trials"],
-          dependencies=[Depends(require_api_key)])
-def bulk_create_trials(
-    trials: List[TrialCreate], db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+@app.post("/trials/bulk", tags=["Trials"], dependencies=[Depends(require_api_key)])
+def bulk_create_trials(trials: List[TrialCreate], db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Create multiple trial records in a single request (max 50).
 
     Skips any trial whose ID already exists and reports it in the skipped list.
@@ -566,19 +606,30 @@ def bulk_create_trials(
         if db.query(Trial).filter(Trial.id == t.id).first():
             skipped_ids.append(t.id)
             continue
-        db.add(Trial(
-            id=t.id, name=t.name, description=t.description, sponsor=t.sponsor,
-            phase=t.phase, primary_condition=t.primary_condition,
-            target_enrollment=t.target_enrollment,
-            inclusion_criteria=t.inclusion_criteria or [],
-            exclusion_criteria=t.exclusion_criteria or [],
-            start_date=t.start_date, completion_date=t.completion_date,
-        ))
+        db.add(
+            Trial(
+                id=t.id,
+                name=t.name,
+                description=t.description,
+                sponsor=t.sponsor,
+                phase=t.phase,
+                primary_condition=t.primary_condition,
+                target_enrollment=t.target_enrollment,
+                inclusion_criteria=t.inclusion_criteria or [],
+                exclusion_criteria=t.exclusion_criteria or [],
+                start_date=t.start_date,
+                completion_date=t.completion_date,
+            )
+        )
         created_ids.append(t.id)
     db.commit()
     logger.info("Bulk created %d trials, skipped %d", len(created_ids), len(skipped_ids))
-    return {"created": len(created_ids), "skipped": len(skipped_ids),
-            "created_ids": created_ids, "skipped_ids": skipped_ids}
+    return {
+        "created": len(created_ids),
+        "skipped": len(skipped_ids),
+        "created_ids": created_ids,
+        "skipped_ids": skipped_ids,
+    }
 
 
 # ------------------------------------------------------------------
@@ -624,11 +675,10 @@ def _compute_combined_score(rule_score: float, ml_score: float) -> float:
     return round(_COMBINED_RULE_WEIGHT * rule_score + _COMBINED_ML_WEIGHT * ml_score, 2)
 
 
-@app.post("/match/{patient_id}/{trial_id}", tags=["Matching"],
-          dependencies=[Depends(require_api_key)])
-def check_match(
-    patient_id: str, trial_id: str, db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+@app.post(
+    "/match/{patient_id}/{trial_id}", tags=["Matching"], dependencies=[Depends(require_api_key)]
+)
+def check_match(patient_id: str, trial_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Run rule-based and ML matching for a patient-trial pair.
 
     Creates a PatientTrialMatch record and returns the combined result.
@@ -637,12 +687,18 @@ def check_match(
         HTTPException: 409 if a match record already exists.
         HTTPException: 404 if patient or trial is not found.
     """
-    existing = db.query(PatientTrialMatch).filter(
-        PatientTrialMatch.patient_id == patient_id,
-        PatientTrialMatch.trial_id == trial_id,
-    ).first()
+    existing = (
+        db.query(PatientTrialMatch)
+        .filter(
+            PatientTrialMatch.patient_id == patient_id,
+            PatientTrialMatch.trial_id == trial_id,
+        )
+        .first()
+    )
     if existing:
-        raise HTTPException(status_code=409, detail="Match record already exists for this patient-trial pair")
+        raise HTTPException(
+            status_code=409, detail="Match record already exists for this patient-trial pair"
+        )
 
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
@@ -730,10 +786,14 @@ def get_trial_matches(
     matches = q.offset(skip).limit(limit).all()
 
     total = db.query(PatientTrialMatch).filter(PatientTrialMatch.trial_id == trial_id).count()
-    eligible = db.query(PatientTrialMatch).filter(
-        PatientTrialMatch.trial_id == trial_id,
-        PatientTrialMatch.match_status == "ELIGIBLE",
-    ).count()
+    eligible = (
+        db.query(PatientTrialMatch)
+        .filter(
+            PatientTrialMatch.trial_id == trial_id,
+            PatientTrialMatch.match_status == "ELIGIBLE",
+        )
+        .count()
+    )
 
     return {
         "trial_id": trial_id,
@@ -788,9 +848,7 @@ def get_eligible_trials_for_patient(
 
 
 @app.get("/trials/{trial_id}/eligible-patients", tags=["Matching"])
-def get_eligible_patients_for_trial(
-    trial_id: str, db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+def get_eligible_patients_for_trial(trial_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Return all patients with an ELIGIBLE match record for this trial.
 
     Raises:
@@ -819,6 +877,7 @@ def get_eligible_patients_for_trial(
 # NLP
 # ------------------------------------------------------------------
 
+
 @app.post("/nlp/extract-entities", tags=["NLP"])
 def extract_clinical_entities(request: ClinicalNoteRequest) -> Dict[str, Any]:
     """Extract clinical entities (conditions, medications, symptoms) from free text."""
@@ -845,8 +904,9 @@ def generate_clinical_profile(request: ClinicalNoteRequest) -> Dict[str, Any]:
     }
 
 
-@app.post("/patients/{patient_id}/analyze-notes", tags=["NLP"],
-          dependencies=[Depends(require_api_key)])
+@app.post(
+    "/patients/{patient_id}/analyze-notes", tags=["NLP"], dependencies=[Depends(require_api_key)]
+)
 def analyze_patient_notes(
     patient_id: str, request: ClinicalNoteRequest, db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
@@ -878,11 +938,9 @@ def analyze_patient_notes(
 # FHIR import
 # ------------------------------------------------------------------
 
-@app.post("/fhir/import/{fhir_patient_id}", tags=["FHIR"],
-          dependencies=[Depends(require_api_key)])
-def import_fhir_patient(
-    fhir_patient_id: str, db: Session = Depends(get_db)
-) -> Dict[str, Any]:
+
+@app.post("/fhir/import/{fhir_patient_id}", tags=["FHIR"], dependencies=[Depends(require_api_key)])
+def import_fhir_patient(fhir_patient_id: str, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Fetch a patient from the FHIR server and upsert into the local database."""
     profile = fhir_client.fetch_complete_patient_profile(fhir_patient_id)
 
@@ -917,6 +975,7 @@ def import_fhir_patient(
 # Recruitment
 # ------------------------------------------------------------------
 
+
 @app.get("/recruitment/candidates/{trial_id}", tags=["Recruitment"])
 async def get_recruitment_candidates(
     trial_id: str,
@@ -927,6 +986,7 @@ async def get_recruitment_candidates(
     if not db.query(Trial).filter(Trial.id == trial_id).first():
         raise HTTPException(status_code=404, detail="Trial not found")
     from src.recruitment import RecruitmentEngine
+
     engine = RecruitmentEngine()
     candidates = await engine.score_eligible_patients(trial_id, threshold)
     return {
@@ -937,8 +997,11 @@ async def get_recruitment_candidates(
     }
 
 
-@app.post("/recruitment/notify/{patient_id}/{trial_id}", tags=["Recruitment"],
-          dependencies=[Depends(require_api_key)])
+@app.post(
+    "/recruitment/notify/{patient_id}/{trial_id}",
+    tags=["Recruitment"],
+    dependencies=[Depends(require_api_key)],
+)
 async def send_recruitment_notification(
     patient_id: str,
     trial_id: str,
@@ -953,6 +1016,7 @@ async def send_recruitment_notification(
         raise HTTPException(status_code=404, detail="Trial not found")
 
     from src.recruitment import RecruitmentEngine, _patient_to_dict
+
     features = EnrollmentPredictor._dict_to_features(_patient_to_dict(patient))
     ml_result = predictor.predict(features, patient_id, trial_id)
 
@@ -982,9 +1046,11 @@ async def send_recruitment_notification(
 # Admin — seed endpoint
 # ------------------------------------------------------------------
 
+
 @app.post("/admin/seed", tags=["Admin"], dependencies=[Depends(require_api_key)])
 def seed_database(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Populate the database with synthetic patients, trials, and matches."""
     from src.seed_data import run_seed
+
     stats = run_seed(db)
     return {"seeded": True, "stats": stats}

@@ -79,4 +79,5 @@ def test_pipeline_custom_min_samples():
 def test_model_path_is_relative_to_src():
     """MODEL_PATH should not contain a double 'src/src' segment."""
     from pipelines.retrain_pipeline import MODEL_PATH
+
     assert "src/src" not in MODEL_PATH.replace("\\", "/")

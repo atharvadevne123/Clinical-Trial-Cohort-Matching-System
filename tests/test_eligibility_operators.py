@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.eligibility import EligibilityMatcher, SUPPORTED_OPERATORS
+from src.eligibility import SUPPORTED_OPERATORS, EligibilityMatcher
 
 
 @pytest.fixture
@@ -47,8 +47,6 @@ class TestNotInOperator:
         assert len(result["violated_exclusion"]) == 0
 
     def test_not_in_with_list_field(self, matcher):
-        patient = {**PATIENT, "tags": ["enrolled", "active"]}
-        criterion = {"field": "tags", "operator": "NOT_IN", "value": "enrolled,inactive"}
         assert not matcher._not_in(["enrolled", "active"], "enrolled,inactive")
 
     def test_not_in_none_value(self, matcher):
@@ -62,9 +60,7 @@ class TestNotInOperator:
 class TestContainsOperator:
     def test_contains_matching_substring(self, matcher):
         trial = {
-            "inclusion_criteria": [
-                {"field": "site", "operator": "CONTAINS", "value": "bost"}
-            ],
+            "inclusion_criteria": [{"field": "site", "operator": "CONTAINS", "value": "bost"}],
             "exclusion_criteria": [],
         }
         result = matcher.check_match(PATIENT, trial)

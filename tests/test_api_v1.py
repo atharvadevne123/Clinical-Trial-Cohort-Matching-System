@@ -1,4 +1,5 @@
 """Tests for the versioned /api/v1 router."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -66,7 +67,9 @@ def test_v1_status_includes_version():
     assert "trials" in data
 
 
-@pytest.mark.parametrize("path", ["/api/v1/health", "/api/v1/patients", "/api/v1/trials", "/api/v1/status"])
+@pytest.mark.parametrize(
+    "path", ["/api/v1/health", "/api/v1/patients", "/api/v1/trials", "/api/v1/status"]
+)
 def test_v1_endpoints_return_200(path):
     response = client.get(path)
     assert response.status_code == 200

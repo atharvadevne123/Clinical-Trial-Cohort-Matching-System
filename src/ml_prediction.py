@@ -19,10 +19,20 @@ logger = logging.getLogger(__name__)
 MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "enrollment_model.joblib")
 
 FEATURE_NAMES: List[str] = [
-    "age", "gender_male", "num_conditions", "num_medications",
-    "has_diabetes", "has_hypertension", "has_heart_disease",
-    "has_cancer", "has_afib", "smoker", "bmi",
-    "prior_trial_participation", "distance_to_site_km", "num_exclusion_flags",
+    "age",
+    "gender_male",
+    "num_conditions",
+    "num_medications",
+    "has_diabetes",
+    "has_hypertension",
+    "has_heart_disease",
+    "has_cancer",
+    "has_afib",
+    "smoker",
+    "bmi",
+    "prior_trial_participation",
+    "distance_to_site_km",
+    "num_exclusion_flags",
 ]
 
 
@@ -64,13 +74,25 @@ class PatientFeatures:
 
     def to_array(self) -> np.ndarray:
         """Serialise features to a float32 numpy array of shape (14,)."""
-        return np.array([
-            self.age, self.gender_male, self.num_conditions, self.num_medications,
-            self.has_diabetes, self.has_hypertension, self.has_heart_disease,
-            self.has_cancer, self.has_afib, self.smoker, self.bmi,
-            self.prior_trial_participation, self.distance_to_site_km,
-            self.num_exclusion_flags,
-        ], dtype=np.float32)
+        return np.array(
+            [
+                self.age,
+                self.gender_male,
+                self.num_conditions,
+                self.num_medications,
+                self.has_diabetes,
+                self.has_hypertension,
+                self.has_heart_disease,
+                self.has_cancer,
+                self.has_afib,
+                self.smoker,
+                self.bmi,
+                self.prior_trial_participation,
+                self.distance_to_site_km,
+                self.num_exclusion_flags,
+            ],
+            dtype=np.float32,
+        )
 
     @staticmethod
     def feature_names() -> List[str]:
@@ -106,6 +128,7 @@ class PredictionResult:
 # ------------------------------------------------------------------
 # Synthetic training data
 # ------------------------------------------------------------------
+
 
 def _generate_training_data(n: int = 1000):
     """Generate synthetic training data for the XGBoost enrollment model.
@@ -143,13 +166,16 @@ def _generate_training_data(n: int = 1000):
         + rng.normal(0, 0.1, n)
     )
     y = (score > 0.2).astype(int)
-    X = np.column_stack([ages, gm, nc, nm, diab, htn, hd, ca, af, sm, bmi, pt, dist, ef]).astype(np.float32)
+    X = np.column_stack([ages, gm, nc, nm, diab, htn, hd, ca, af, sm, bmi, pt, dist, ef]).astype(
+        np.float32
+    )
     return X, y
 
 
 # ------------------------------------------------------------------
 # Predictor
 # ------------------------------------------------------------------
+
 
 class EnrollmentPredictor:
     """XGBoost enrollment predictor with joblib model persistence.
@@ -194,7 +220,8 @@ class EnrollmentPredictor:
             random_state=42,
         )
         self.model.fit(
-            X[:split], y[:split],
+            X[:split],
+            y[:split],
             eval_set=[(X[split:], y[split:])],
             verbose=False,
         )
@@ -221,8 +248,10 @@ class EnrollmentPredictor:
             logger.debug("Model not loaded; using rule-based fallback for %s", patient_id)
             prob = self._rule_based(features)
         confidence = (
-            "HIGH" if prob >= 0.75 or prob <= 0.25
-            else "MEDIUM" if prob >= 0.60 or prob <= 0.40
+            "HIGH"
+            if prob >= 0.75 or prob <= 0.25
+            else "MEDIUM"
+            if prob >= 0.60 or prob <= 0.40
             else "LOW"
         )
         return PredictionResult(
@@ -300,19 +329,28 @@ class EnrollmentPredictor:
         if f.has_afib:
             factors.append({"factor": "AFib present", "impact": "positive"})
         if f.num_exclusion_flags > 0:
-            factors.append({"factor": f"{f.num_exclusion_flags} exclusion flag(s)", "impact": "negative"})
+            factors.append(
+                {"factor": f"{f.num_exclusion_flags} exclusion flag(s)", "impact": "negative"}
+            )
         if f.prior_trial_participation:
             factors.append({"factor": "Prior trial participation", "impact": "positive"})
         if f.distance_to_site_km > 100:
-            factors.append({"factor": f"Distance {f.distance_to_site_km:.0f} km from site", "impact": "negative"})
+            factors.append(
+                {
+                    "factor": f"Distance {f.distance_to_site_km:.0f} km from site",
+                    "impact": "negative",
+                }
+            )
         if self.model and hasattr(self.model, "feature_importances_"):
             imp = self.model.feature_importances_
             for i in np.argsort(imp)[::-1][:3]:
-                factors.append({
-                    "factor": f"ML: {FEATURE_NAMES[i]}",
-                    "impact": "model",
-                    "importance": round(float(imp[i]), 4),
-                })
+                factors.append(
+                    {
+                        "factor": f"ML: {FEATURE_NAMES[i]}",
+                        "impact": "model",
+                        "importance": round(float(imp[i]), 4),
+                    }
+                )
         return factors[:6]
 
     def _recommendation(self, prob: float, f: PatientFeatures) -> str:
@@ -393,6 +431,7 @@ predictor = EnrollmentPredictor()
 # ------------------------------------------------------------------
 # FastAPI router factory
 # ------------------------------------------------------------------
+
 
 def create_ml_router():
     """Create and return the FastAPI router for ML prediction endpoints."""

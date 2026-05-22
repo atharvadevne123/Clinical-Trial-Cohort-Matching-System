@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import httpx
 import pytest
@@ -27,8 +27,10 @@ class TestFHIRRetryLogic:
 
     def test_all_retries_exhausted_raises(self):
         client = FHIRClient(base_url="http://fhir-test:8080/fhir", timeout=1.0)
-        with patch("src.fhir.httpx.get", side_effect=httpx.ConnectError("refused")), \
-             patch("src.fhir.time.sleep"):
+        with (
+            patch("src.fhir.httpx.get", side_effect=httpx.ConnectError("refused")),
+            patch("src.fhir.time.sleep"),
+        ):
             with pytest.raises(httpx.ConnectError):
                 client._get_with_retry("http://fhir-test:8080/fhir/Patient/P1")
 

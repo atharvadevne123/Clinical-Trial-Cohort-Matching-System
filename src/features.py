@@ -94,22 +94,25 @@ def build_feature_vector(patient: Dict[str, Any]) -> np.ndarray:
     medications = patient.get("medications") or []
     flags = extract_condition_flags(conditions)
 
-    return np.array([
-        compute_age(patient.get("date_of_birth")),
-        1 if str(patient.get("gender", "")).upper() == "MALE" else 0,
-        len(conditions),
-        len(medications),
-        flags["has_diabetes"],
-        flags["has_hypertension"],
-        flags["has_heart_disease"],
-        flags["has_cancer"],
-        flags["has_afib"],
-        int(patient.get("smoker", False)),
-        float(patient.get("bmi", 25.0)),
-        int(patient.get("prior_trial_participation", False)),
-        float(patient.get("distance_to_site_km", 50.0)),
-        int(patient.get("num_exclusion_flags", 0)),
-    ], dtype=np.float32)
+    return np.array(
+        [
+            compute_age(patient.get("date_of_birth")),
+            1 if str(patient.get("gender", "")).upper() == "MALE" else 0,
+            len(conditions),
+            len(medications),
+            flags["has_diabetes"],
+            flags["has_hypertension"],
+            flags["has_heart_disease"],
+            flags["has_cancer"],
+            flags["has_afib"],
+            int(patient.get("smoker", False)),
+            float(patient.get("bmi", 25.0)),
+            int(patient.get("prior_trial_participation", False)),
+            float(patient.get("distance_to_site_km", 50.0)),
+            int(patient.get("num_exclusion_flags", 0)),
+        ],
+        dtype=np.float32,
+    )
 
 
 class ClinicalFeaturePipeline:
@@ -134,6 +137,7 @@ class ClinicalFeaturePipeline:
             Scaled feature matrix of shape (n_patients, 14).
         """
         from sklearn.preprocessing import StandardScaler
+
         X = np.vstack([build_feature_vector(p) for p in patients])
         self.scaler = StandardScaler()
         return self.scaler.fit_transform(X)

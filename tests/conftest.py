@@ -1,4 +1,5 @@
 """Pytest fixtures for Clinical Trial Cohort Matching System tests."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine

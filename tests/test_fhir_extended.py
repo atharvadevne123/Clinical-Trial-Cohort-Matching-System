@@ -143,8 +143,10 @@ def test_parse_condition_missing_coding(fhir):
 def test_fhir_timeout_configurable(monkeypatch):
     """FHIR_TIMEOUT env var should control the default timeout."""
     import importlib
+
     monkeypatch.setenv("FHIR_TIMEOUT", "10.0")
     import src.fhir as fhir_module
+
     importlib.reload(fhir_module)
     assert fhir_module._FHIR_TIMEOUT == 10.0
     monkeypatch.delenv("FHIR_TIMEOUT", raising=False)
@@ -154,6 +156,7 @@ def test_fhir_timeout_configurable(monkeypatch):
 def test_fhir_client_uses_fhir_timeout_default():
     """FHIRClient default timeout should equal _FHIR_TIMEOUT."""
     from src.fhir import _FHIR_TIMEOUT, FHIRClient
+
     client = FHIRClient()
     assert client.timeout == _FHIR_TIMEOUT
 

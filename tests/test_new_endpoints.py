@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 import pytest
-
 
 PATIENT_BASE = {
     "id": "NE_P001",
@@ -32,6 +29,7 @@ TRIAL_BASE = {
 @pytest.fixture(autouse=True)
 def cleanup(client, db_session):
     from src.models import Patient, Trial
+
     yield
     db_session.query(Patient).filter(Patient.id.like("NE_%")).delete(synchronize_session=False)
     db_session.query(Trial).filter(Trial.id.like("NE_%")).delete(synchronize_session=False)

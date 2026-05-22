@@ -1,4 +1,5 @@
 """Tests for the eligibility matching engine."""
+
 import pytest
 
 from src.eligibility import EligibilityMatcher
@@ -60,7 +61,12 @@ def test_no_criteria_gives_full_score(matcher, basic_patient):
 
 
 def test_age_criterion_gt(matcher):
-    patient = {"id": "P003", "date_of_birth": "1960-01-01T00:00:00", "conditions": [], "medications": []}
+    patient = {
+        "id": "P003",
+        "date_of_birth": "1960-01-01T00:00:00",
+        "conditions": [],
+        "medications": [],
+    }
     trial = {
         "id": "T004",
         "inclusion_criteria": [{"field": "age", "operator": "GT", "value": 50}],
@@ -71,7 +77,12 @@ def test_age_criterion_gt(matcher):
 
 
 def test_age_criterion_lt_fails_older_patient(matcher):
-    patient = {"id": "P004", "date_of_birth": "1940-01-01T00:00:00", "conditions": [], "medications": []}
+    patient = {
+        "id": "P004",
+        "date_of_birth": "1940-01-01T00:00:00",
+        "conditions": [],
+        "medications": [],
+    }
     trial = {
         "id": "T005",
         "inclusion_criteria": [{"field": "age", "operator": "LT", "value": 50}],
@@ -81,11 +92,14 @@ def test_age_criterion_lt_fails_older_patient(matcher):
     assert result["eligible"] is False
 
 
-@pytest.mark.parametrize("operator,value,dob,expected", [
-    ("GTE", 18, "2000-01-01T00:00:00", True),
-    ("LTE", 80, "1970-01-01T00:00:00", True),
-    ("EQ", "male", None, False),
-])
+@pytest.mark.parametrize(
+    "operator,value,dob,expected",
+    [
+        ("GTE", 18, "2000-01-01T00:00:00", True),
+        ("LTE", 80, "1970-01-01T00:00:00", True),
+        ("EQ", "male", None, False),
+    ],
+)
 def test_parametrized_age_operators(matcher, operator, value, dob, expected):
     patient = {
         "id": "P_PARAM",

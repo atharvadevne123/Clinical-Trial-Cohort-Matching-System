@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
-
 import pytest
 
 from src.monitoring import DriftResult, SummaryResult
@@ -13,7 +11,9 @@ class TestSetReferenceEndpoint:
     def _monitoring_client(self):
         """Create a test client with monitoring router."""
         from fastapi.testclient import TestClient
+
         from src.main import app
+
         return TestClient(app)
 
     def test_set_reference_with_valid_probabilities(self):

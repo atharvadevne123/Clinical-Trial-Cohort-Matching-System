@@ -15,9 +15,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-MODEL_PATH: str = os.path.join(
-    os.path.dirname(__file__), "..", "src", "enrollment_model.joblib"
-)
+MODEL_PATH: str = os.path.join(os.path.dirname(__file__), "..", "src", "enrollment_model.joblib")
 
 
 class RetrainingPipeline:
@@ -103,6 +101,7 @@ class RetrainingPipeline:
             Tuple (X, y) of feature matrix and binary labels.
         """
         from src.ml_prediction import _generate_training_data
+
         return _generate_training_data(n)
 
 

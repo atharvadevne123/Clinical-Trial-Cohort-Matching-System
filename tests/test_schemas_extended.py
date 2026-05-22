@@ -1,4 +1,5 @@
 """Extended schema validation tests."""
+
 from datetime import datetime
 
 import pytest
@@ -65,7 +66,9 @@ def test_trial_invalid_phase_raises_error():
         )
 
 
-@pytest.mark.parametrize("phase", ["Phase 1", "Phase 2", "Phase 3", "Phase 4", "Phase 1/2", "Phase 2/3", "N/A"])
+@pytest.mark.parametrize(
+    "phase", ["Phase 1", "Phase 2", "Phase 3", "Phase 4", "Phase 1/2", "Phase 2/3", "N/A"]
+)
 def test_trial_valid_phases(phase):
     t = TrialCreate(
         id=f"T_{phase.replace(' ', '_')}",
@@ -90,6 +93,7 @@ def test_trial_target_enrollment_must_be_positive():
 
 def test_clinical_note_request_requires_text():
     from pydantic import ValidationError
+
     with pytest.raises(ValidationError):
         ClinicalNoteRequest()
 
@@ -99,13 +103,16 @@ def test_clinical_note_request_valid():
     assert req.text == "Patient has hypertension."
 
 
-@pytest.mark.parametrize("invalid_email", [
-    "notanemail",
-    "missing-at-sign",
-    "@nodomain",
-    "nolocal@",
-    "no-dot@domain",
-])
+@pytest.mark.parametrize(
+    "invalid_email",
+    [
+        "notanemail",
+        "missing-at-sign",
+        "@nodomain",
+        "nolocal@",
+        "no-dot@domain",
+    ],
+)
 def test_patient_invalid_email_formats(invalid_email):
     """All invalid email formats should raise ValidationError."""
     with pytest.raises(ValidationError):
@@ -119,11 +126,14 @@ def test_patient_invalid_email_formats(invalid_email):
         )
 
 
-@pytest.mark.parametrize("valid_email", [
-    "test@example.com",
-    "user.name@domain.org",
-    "user+tag@sub.domain.co.uk",
-])
+@pytest.mark.parametrize(
+    "valid_email",
+    [
+        "test@example.com",
+        "user.name@domain.org",
+        "user+tag@sub.domain.co.uk",
+    ],
+)
 def test_patient_valid_email_formats(valid_email):
     p = PatientCreate(
         id="P_GOOD_EMAIL",

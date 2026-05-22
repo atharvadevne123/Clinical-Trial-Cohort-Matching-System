@@ -16,9 +16,17 @@ _SEVERITY_WINDOW_CHARS: int = 100
 """Characters to scan around a keyword to detect severity markers."""
 
 _NEGATION_WORDS: List[str] = [
-    "no ", "not ", "without ", "denies ", "denied ",
-    "no history of ", "negative for ", "rules out ",
-    "ruled out ", "absence of ", "never had ",
+    "no ",
+    "not ",
+    "without ",
+    "denies ",
+    "denied ",
+    "no history of ",
+    "negative for ",
+    "rules out ",
+    "ruled out ",
+    "absence of ",
+    "never had ",
 ]
 
 
@@ -112,24 +120,28 @@ class ClinicalNLPProcessor:
 
         for keyword, info in self.condition_keywords.items():
             if keyword in text_lower and not self._is_negated(text_lower, keyword):
-                entities["conditions"].append({
-                    "text": keyword,
-                    "codes": info["codes"],
-                    "type": info["type"],
-                    "confidence": 0.85,
-                })
+                entities["conditions"].append(
+                    {
+                        "text": keyword,
+                        "codes": info["codes"],
+                        "type": info["type"],
+                        "confidence": 0.85,
+                    }
+                )
                 severity = self._extract_severity(text_lower, keyword)
                 if severity:
                     entities["severity"][keyword] = severity
 
         for keyword, info in self.medication_keywords.items():
             if keyword in text_lower and not self._is_negated(text_lower, keyword):
-                entities["medications"].append({
-                    "text": keyword,
-                    "codes": info["codes"],
-                    "type": info["type"],
-                    "confidence": 0.85,
-                })
+                entities["medications"].append(
+                    {
+                        "text": keyword,
+                        "codes": info["codes"],
+                        "type": info["type"],
+                        "confidence": 0.85,
+                    }
+                )
 
         entities["symptoms"] = self._extract_symptoms(text_lower)
         return entities
@@ -146,11 +158,7 @@ class ClinicalNLPProcessor:
         """
         entities = self.extract_entities(text)
         num_conditions = len(entities["conditions"])
-        burden = (
-            "low" if num_conditions <= 1
-            else "moderate" if num_conditions <= 3
-            else "high"
-        )
+        burden = "low" if num_conditions <= 1 else "moderate" if num_conditions <= 3 else "high"
         return {
             "num_conditions": num_conditions,
             "num_medications": len(entities["medications"]),
@@ -181,7 +189,7 @@ class ClinicalNLPProcessor:
         pos = text.find(keyword)
         if pos == -1:
             return False
-        window = text[max(0, pos - _NEGATION_WINDOW_CHARS): pos]
+        window = text[max(0, pos - _NEGATION_WINDOW_CHARS) : pos]
         return any(neg in window for neg in _NEGATION_WORDS)
 
     def _extract_severity(self, text: str, entity: str) -> Optional[str]:
@@ -197,7 +205,9 @@ class ClinicalNLPProcessor:
         pos = text.find(entity)
         if pos == -1:
             return None
-        context = text[max(0, pos - _SEVERITY_WINDOW_CHARS): pos + len(entity) + _SEVERITY_WINDOW_CHARS]
+        context = text[
+            max(0, pos - _SEVERITY_WINDOW_CHARS) : pos + len(entity) + _SEVERITY_WINDOW_CHARS
+        ]
         for word in self.severity_markers:
             if word in context:
                 return word

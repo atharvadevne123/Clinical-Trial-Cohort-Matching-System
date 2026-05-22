@@ -1,4 +1,5 @@
 """Extended eligibility matcher edge-case tests."""
+
 from datetime import datetime, timezone
 
 import pytest
@@ -68,7 +69,9 @@ def test_medication_code_lookup(matcher):
     }
     trial = {
         "id": "T_MED",
-        "inclusion_criteria": [{"field": "medication:B01AA03", "operator": "EXISTS", "value": None}],
+        "inclusion_criteria": [
+            {"field": "medication:B01AA03", "operator": "EXISTS", "value": None}
+        ],
         "exclusion_criteria": [],
     }
     result = matcher.check_match(patient, trial)
@@ -107,12 +110,15 @@ def test_nested_path_lookup(matcher):
     assert result["eligible"] is True
 
 
-@pytest.mark.parametrize("conditions,expected_code", [
-    ([{"code": "I10"}], "I10"),
-    ([{"icd10_code": "I10"}], "I10"),
-    (["I10"], "I10"),
-    ([], None),
-])
+@pytest.mark.parametrize(
+    "conditions,expected_code",
+    [
+        ([{"code": "I10"}], "I10"),
+        ([{"icd10_code": "I10"}], "I10"),
+        (["I10"], "I10"),
+        ([], None),
+    ],
+)
 def test_find_condition_code_variants(matcher, conditions, expected_code):
     result = matcher._find_condition_code({"conditions": conditions}, "I10")
     assert result == expected_code
@@ -139,22 +145,28 @@ def test_nested_path_non_dict_intermediate_returns_none(matcher):
     assert result is None
 
 
-@pytest.mark.parametrize("a,b,expected", [
-    (5, 3, True),
-    (3, 5, False),
-    (None, 3, False),
-    ("text", 3, False),
-])
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        (5, 3, True),
+        (3, 5, False),
+        (None, 3, False),
+        ("text", 3, False),
+    ],
+)
 def test_gt_operator_parametrized(matcher, a, b, expected):
     assert matcher._gt(a, b) == expected
 
 
-@pytest.mark.parametrize("a,b,expected", [
-    ("male,female", None, False),
-    ("male", "male,female,other", True),
-    (["male"], "male,female", True),
-    (["unknown"], "male,female", False),
-])
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        ("male,female", None, False),
+        ("male", "male,female,other", True),
+        (["male"], "male,female", True),
+        (["unknown"], "male,female", False),
+    ],
+)
 def test_in_operator_parametrized(matcher, a, b, expected):
     assert matcher._in(a, b) == expected
 
@@ -185,5 +197,7 @@ def test_score_candidates_includes_patient_id(matcher):
 
 
 def test_score_candidates_empty_list(matcher):
-    results = matcher.score_candidates([], {"id": "T_EMPTY", "inclusion_criteria": [], "exclusion_criteria": []})
+    results = matcher.score_candidates(
+        [], {"id": "T_EMPTY", "inclusion_criteria": [], "exclusion_criteria": []}
+    )
     assert results == []

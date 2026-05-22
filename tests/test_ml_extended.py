@@ -1,4 +1,5 @@
 """Extended ML prediction tests with parametrize."""
+
 from unittest.mock import patch
 
 import pytest
@@ -17,11 +18,14 @@ def predictor():
     return p
 
 
-@pytest.mark.parametrize("age,has_cancer,expected_sign", [
-    (55, 0, "positive_age"),
-    (80, 0, "negative_age"),
-    (55, 1, "cancer"),
-])
+@pytest.mark.parametrize(
+    "age,has_cancer,expected_sign",
+    [
+        (55, 0, "positive_age"),
+        (80, 0, "negative_age"),
+        (55, 1, "cancer"),
+    ],
+)
 def test_explain_factors_coverage(predictor, age, has_cancer, expected_sign):
     f = PatientFeatures(age=age, has_cancer=has_cancer)
     factors = predictor._explain(f)
@@ -34,12 +38,15 @@ def test_explain_factors_coverage(predictor, age, has_cancer, expected_sign):
         assert "Cancer" in factor_text
 
 
-@pytest.mark.parametrize("prob,expected_rec_keyword", [
-    (0.80, "Strong"),
-    (0.60, "Likely"),
-    (0.45, "Borderline"),
-    (0.10, "Low"),
-])
+@pytest.mark.parametrize(
+    "prob,expected_rec_keyword",
+    [
+        (0.80, "Strong"),
+        (0.60, "Likely"),
+        (0.45, "Borderline"),
+        (0.10, "Low"),
+    ],
+)
 def test_recommendation_strings(predictor, prob, expected_rec_keyword):
     f = PatientFeatures()
     rec = predictor._recommendation(prob, f)
@@ -116,8 +123,14 @@ def test_predict_with_no_model_uses_rule_based(predictor):
 def test_predict_batch_result_sorted_descending(predictor):
     predictor.model = None
     patients = [
-        {"id": f"P{i}", "date_of_birth": "1975-01-01", "gender": "male",
-         "conditions": [], "medications": [], "bmi": 20 + i}
+        {
+            "id": f"P{i}",
+            "date_of_birth": "1975-01-01",
+            "gender": "male",
+            "conditions": [],
+            "medications": [],
+            "bmi": 20 + i,
+        }
         for i in range(5)
     ]
     results = predictor.predict_batch(patients, "T_BATCH")
@@ -125,11 +138,14 @@ def test_predict_batch_result_sorted_descending(predictor):
     assert probs == sorted(probs, reverse=True)
 
 
-@pytest.mark.parametrize("age,expected_range", [
-    (25, (0.0, 1.0)),
-    (55, (0.0, 1.0)),
-    (85, (0.0, 1.0)),
-])
+@pytest.mark.parametrize(
+    "age,expected_range",
+    [
+        (25, (0.0, 1.0)),
+        (55, (0.0, 1.0)),
+        (85, (0.0, 1.0)),
+    ],
+)
 def test_rule_based_returns_valid_probability(predictor, age, expected_range):
     predictor.model = None
     f = PatientFeatures(age=age)

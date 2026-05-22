@@ -39,6 +39,7 @@ def benchmark_eligibility_matcher(n_patients: int = 100, n_trials: int = 10) -> 
         Dict with total_pairs, total_seconds, pairs_per_second, mean_ms.
     """
     from src.eligibility import EligibilityMatcher
+
     matcher = EligibilityMatcher()
 
     patients = [
@@ -70,7 +71,9 @@ def benchmark_eligibility_matcher(n_patients: int = 100, n_trials: int = 10) -> 
     elapsed = time.perf_counter() - start
 
     throughput = count / elapsed if elapsed > 0 else float("inf")
-    logger.info("Eligibility benchmark: %d pairs in %.3fs (%.0f pairs/s)", count, elapsed, throughput)
+    logger.info(
+        "Eligibility benchmark: %d pairs in %.3fs (%.0f pairs/s)", count, elapsed, throughput
+    )
 
     return {
         "total_pairs": count,
@@ -119,6 +122,7 @@ def benchmark_ml_predictor(n_patients: int = 100) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import json
+
     logging.basicConfig(level=logging.INFO)
     eligibility_result = benchmark_eligibility_matcher(200, 25)
     ml_result = benchmark_ml_predictor(200)

@@ -1,4 +1,5 @@
 """Tests for data validation utilities."""
+
 from datetime import datetime
 
 import pytest
@@ -12,41 +13,50 @@ from src.validators import (
 )
 
 
-@pytest.mark.parametrize("code,expected", [
-    ("I10", True),
-    ("E11", True),
-    ("E11.9", True),
-    ("I48.91", True),
-    ("C50", True),
-    ("X99", True),
-    ("invalid", False),
-    ("", False),
-    ("123", False),
-    ("i10", False),
-])
+@pytest.mark.parametrize(
+    "code,expected",
+    [
+        ("I10", True),
+        ("E11", True),
+        ("E11.9", True),
+        ("I48.91", True),
+        ("C50", True),
+        ("X99", True),
+        ("invalid", False),
+        ("", False),
+        ("123", False),
+        ("i10", False),
+    ],
+)
 def test_is_valid_icd10(code, expected):
     assert is_valid_icd10(code) == expected
 
 
-@pytest.mark.parametrize("code,expected", [
-    ("C09AA01", True),
-    ("A10BA02", True),
-    ("B01AA03", True),
-    ("invalid", False),
-    ("C09", False),
-    ("", False),
-])
+@pytest.mark.parametrize(
+    "code,expected",
+    [
+        ("C09AA01", True),
+        ("A10BA02", True),
+        ("B01AA03", True),
+        ("invalid", False),
+        ("C09", False),
+        ("", False),
+    ],
+)
 def test_is_valid_atc(code, expected):
     assert is_valid_atc(code) == expected
 
 
-@pytest.mark.parametrize("prob,expected_valid", [
-    (0.0, True),
-    (0.5, True),
-    (1.0, True),
-    (-0.1, False),
-    (1.1, False),
-])
+@pytest.mark.parametrize(
+    "prob,expected_valid",
+    [
+        (0.0, True),
+        (0.5, True),
+        (1.0, True),
+        (-0.1, False),
+        (1.1, False),
+    ],
+)
 def test_validate_probability(prob, expected_valid):
     valid, msg = validate_enrollment_probability(prob)
     assert valid == expected_valid
@@ -99,15 +109,18 @@ def test_validate_conditions_mixed():
     assert len(warnings) == 1
 
 
-@pytest.mark.parametrize("code,expected", [
-    ("Z00.00", True),
-    ("Z00.00A", True),
-    ("M54.5", True),
-    ("F32", True),
-    ("G43.909", True),
-    ("z10", False),
-    ("I10.X9999999", False),
-])
+@pytest.mark.parametrize(
+    "code,expected",
+    [
+        ("Z00.00", True),
+        ("Z00.00A", True),
+        ("M54.5", True),
+        ("F32", True),
+        ("G43.909", True),
+        ("z10", False),
+        ("I10.X9999999", False),
+    ],
+)
 def test_is_valid_icd10_extended_formats(code, expected):
     """Test ICD-10 validation with extended alphanumeric suffix formats."""
     assert is_valid_icd10(code) == expected
@@ -139,6 +152,7 @@ def test_validate_conditions_string_code():
 def test_validators_all_exports():
     """All public symbols should be present in __all__."""
     from src.validators import __all__ as exports
+
     assert "is_valid_icd10" in exports
     assert "is_valid_atc" in exports
     assert "validate_enrollment_probability" in exports

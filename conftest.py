@@ -1,4 +1,5 @@
 """Root-level pytest configuration and shared fixtures."""
+
 import os
 
 import pytest
@@ -20,6 +21,7 @@ def set_test_env():
     yield
     # Cleanup test database files after session
     import glob
+
     for db_file in glob.glob("*.db"):
         try:
             os.remove(db_file)

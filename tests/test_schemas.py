@@ -1,4 +1,5 @@
 """Tests for Pydantic schemas."""
+
 from datetime import datetime
 
 import pytest

@@ -1,4 +1,5 @@
 """Extended API endpoint tests."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -30,7 +31,7 @@ def test_version_endpoint_returns_version():
     assert response.status_code == 200
     data = response.json()
     assert "version" in data
-    assert data["version"] == "1.1.0"
+    assert data["version"] == "1.2.0"
 
 
 def test_healthz_endpoint():

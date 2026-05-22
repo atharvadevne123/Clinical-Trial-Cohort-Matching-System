@@ -93,9 +93,7 @@ class PredictionMonitor:
         drift = bool(p_value < _DRIFT_THRESHOLD)
 
         if drift:
-            logger.warning(
-                "Drift detected! KS statistic=%.4f, p-value=%.6f", stat, p_value
-            )
+            logger.warning("Drift detected! KS statistic=%.4f, p-value=%.6f", stat, p_value)
         else:
             logger.debug("No drift detected. KS=%.4f, p=%.4f", stat, p_value)
 

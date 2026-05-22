@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import uuid
 
 import pytest
@@ -61,6 +60,7 @@ class TestCorrelationIdHeader:
         resp = client.get("/ping")
         cid = resp.headers["x-correlation-id"]
         import uuid
+
         uuid.UUID(cid)
 
 
@@ -82,6 +82,7 @@ class TestVersionEndpoint:
 class TestCorsOriginsConfig:
     def test_cors_origins_defaults_to_wildcard(self):
         import src.main as main_module
+
         cors = getattr(main_module, "_CORS_ORIGINS", None)
         if cors is not None:
             assert isinstance(cors, list)

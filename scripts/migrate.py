@@ -44,29 +44,37 @@ def apply_migrations(engine: Any) -> None:
         engine: SQLAlchemy engine instance.
     """
     with engine.connect() as conn:
-        conn.execute(text(
-            "CREATE TABLE IF NOT EXISTS migration_log ("
-            "  version VARCHAR(10) PRIMARY KEY,"
-            "  description TEXT,"
-            "  applied_at TIMESTAMP"
-            ")"
-        ))
+        conn.execute(
+            text(
+                "CREATE TABLE IF NOT EXISTS migration_log ("
+                "  version VARCHAR(10) PRIMARY KEY,"
+                "  description TEXT,"
+                "  applied_at TIMESTAMP"
+                ")"
+            )
+        )
         conn.commit()
 
-        applied = {
-            row[0] for row in conn.execute(text("SELECT version FROM migration_log"))
-        }
+        applied = {row[0] for row in conn.execute(text("SELECT version FROM migration_log"))}
 
         for migration in MIGRATIONS:
             if migration["version"] not in applied:
-                logger.info("Applying migration %s: %s", migration["version"], migration["description"])
+                logger.info(
+                    "Applying migration %s: %s", migration["version"], migration["description"]
+                )
                 try:
                     conn.execute(text(migration["up"]))
-                    conn.execute(text(
-                        "INSERT INTO migration_log (version, description, applied_at) "
-                        "VALUES (:v, :d, :t)"
-                    ), {"v": migration["version"], "d": migration["description"],
-                        "t": datetime.now(timezone.utc).isoformat()})
+                    conn.execute(
+                        text(
+                            "INSERT INTO migration_log (version, description, applied_at) "
+                            "VALUES (:v, :d, :t)"
+                        ),
+                        {
+                            "v": migration["version"],
+                            "d": migration["description"],
+                            "t": datetime.now(timezone.utc).isoformat(),
+                        },
+                    )
                     conn.commit()
                     logger.info("Migration %s applied.", migration["version"])
                 except Exception as exc:
@@ -77,5 +85,6 @@ def apply_migrations(engine: Any) -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     from src.models import engine
+
     apply_migrations(engine)
     logger.info("All migrations applied.")

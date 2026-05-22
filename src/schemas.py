@@ -175,11 +175,17 @@ class MatchResponse(BaseModel):
     trial_id: str = Field(..., description="Clinical trial identifier")
     rule_match_score: float = Field(..., description="Rule-based eligibility score (0–100)")
     ml_match_score: float = Field(..., description="ML model match score (0–100)")
-    enrollment_probability: float = Field(..., description="XGBoost enrollment probability (0.0–1.0)")
+    enrollment_probability: float = Field(
+        ..., description="XGBoost enrollment probability (0.0–1.0)"
+    )
     combined_score: float = Field(..., description="Weighted combination of rule and ML scores")
     match_status: str = Field(..., description="Status: PENDING, ELIGIBLE, INELIGIBLE, ENROLLED")
-    matched_criteria: Optional[List[Dict[str, Any]]] = Field(None, description="Inclusion criteria met")
-    violated_criteria: Optional[List[Dict[str, Any]]] = Field(None, description="Exclusion criteria violated")
+    matched_criteria: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Inclusion criteria met"
+    )
+    violated_criteria: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Exclusion criteria violated"
+    )
     reasons: Optional[List[str]] = Field(None, description="Human-readable match reasoning")
     letter_sent: bool = Field(..., description="Whether a recruitment letter has been sent")
     enrolled: bool = Field(..., description="Whether the patient is enrolled in the trial")

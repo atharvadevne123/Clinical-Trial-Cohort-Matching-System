@@ -88,7 +88,9 @@ class Patient(Base):
     created_at: datetime = Column(DateTime(timezone=True), default=_now)
     updated_at: datetime = Column(DateTime(timezone=True), default=_now, onupdate=_now)
 
-    matches = relationship("PatientTrialMatch", back_populates="patient", cascade="all, delete-orphan")
+    matches = relationship(
+        "PatientTrialMatch", back_populates="patient", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("ix_patients_gender", "gender"),
@@ -137,7 +139,9 @@ class Trial(Base):
     created_at: datetime = Column(DateTime(timezone=True), default=_now)
     updated_at: datetime = Column(DateTime(timezone=True), default=_now, onupdate=_now)
 
-    matches = relationship("PatientTrialMatch", back_populates="trial", cascade="all, delete-orphan")
+    matches = relationship(
+        "PatientTrialMatch", back_populates="trial", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("ix_trials_phase", "phase"),
@@ -177,9 +181,7 @@ class PatientTrialMatch(Base):
     created_at: datetime = Column(DateTime(timezone=True), default=_now)
     updated_at: datetime = Column(DateTime(timezone=True), default=_now, onupdate=_now)
 
-    __table_args__ = (
-        UniqueConstraint("patient_id", "trial_id", name="uq_patient_trial"),
-    )
+    __table_args__ = (UniqueConstraint("patient_id", "trial_id", name="uq_patient_trial"),)
 
     patient = relationship("Patient", back_populates="matches")
     trial = relationship("Trial", back_populates="matches")

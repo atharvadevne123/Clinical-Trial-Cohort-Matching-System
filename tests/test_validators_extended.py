@@ -14,11 +14,14 @@ from src.validators import (
 
 
 class TestValidatePatientMedications:
-    @pytest.mark.parametrize("code,expected_warnings", [
-        ("C09AA01", 0),  # valid ATC
-        ("INVALID", 1),  # invalid code
-        ("", 0),         # empty code skipped
-    ])
+    @pytest.mark.parametrize(
+        "code,expected_warnings",
+        [
+            ("C09AA01", 0),  # valid ATC
+            ("INVALID", 1),  # invalid code
+            ("", 0),  # empty code skipped
+        ],
+    )
     def test_medication_code_validation(self, code, expected_warnings):
         meds = [{"code": code, "name": "Drug"}] if code else [{"name": "Drug"}]
         warnings = validate_patient_medications(meds)
@@ -67,7 +70,9 @@ class TestValidateCriteriaList:
     def test_empty_criteria_no_warnings(self):
         assert validate_criteria_list([]) == []
 
-    @pytest.mark.parametrize("operator", ["EQ", "GT", "LT", "GTE", "LTE", "IN", "EXISTS", "NOT_EXISTS"])
+    @pytest.mark.parametrize(
+        "operator", ["EQ", "GT", "LT", "GTE", "LTE", "IN", "EXISTS", "NOT_EXISTS"]
+    )
     def test_all_valid_operators_accepted(self, operator):
         criteria = [{"field": "some_field", "operator": operator, "value": None}]
         assert validate_criteria_list(criteria) == []

@@ -1,4 +1,5 @@
 """Tests for drift monitoring module."""
+
 import numpy as np
 import pytest
 
@@ -86,8 +87,10 @@ def test_record_boundary_values(monitor, prob):
 def test_drift_threshold_configurable(monkeypatch):
     """DRIFT_THRESHOLD should be read from the DRIFT_THRESHOLD env var."""
     import importlib
+
     monkeypatch.setenv("DRIFT_THRESHOLD", "0.10")
     import src.monitoring as mon_module
+
     importlib.reload(mon_module)
     assert mon_module._DRIFT_THRESHOLD == 0.10
     # restore
@@ -116,6 +119,7 @@ def test_monitor_window_sizes(window_size):
 def test_summary_stats_accuracy():
     """Verify that summary stats match numpy calculations."""
     import numpy as np
+
     m = PredictionMonitor()
     data = [0.1, 0.2, 0.3, 0.4, 0.5]
     for v in data:

@@ -1,4 +1,5 @@
 """Tests for performance benchmark utilities."""
+
 import pytest
 
 from scripts.benchmark import benchmark_eligibility_matcher, benchmark_ml_predictor, time_function
@@ -7,6 +8,7 @@ from scripts.benchmark import benchmark_eligibility_matcher, benchmark_ml_predic
 def test_time_function_basic():
     def add(a, b):
         return a + b
+
     result, elapsed = time_function(add, 1, 2)
     assert result == 3
     assert elapsed >= 0.0

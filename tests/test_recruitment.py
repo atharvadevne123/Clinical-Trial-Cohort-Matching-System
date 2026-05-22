@@ -1,4 +1,5 @@
 """Tests for the recruitment engine."""
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -101,8 +102,10 @@ def test_patient_to_dict_none_conditions_returns_empty_list():
 def test_smtp_timeout_env_var(monkeypatch):
     """SMTP_TIMEOUT env var should be imported as _SMTP_TIMEOUT."""
     import importlib
+
     monkeypatch.setenv("SMTP_TIMEOUT", "15")
     import src.recruitment as rec_module
+
     importlib.reload(rec_module)
     assert rec_module._SMTP_TIMEOUT == 15
     monkeypatch.delenv("SMTP_TIMEOUT", raising=False)
@@ -131,7 +134,15 @@ async def test_run_recruitment_batch_result_keys(engine):
         mock_session_cls.return_value.__exit__ = MagicMock(return_value=False)
         mock_session.query.return_value.filter.return_value.first.return_value = None
         result = await engine.run_recruitment_batch("T_KEYS")
-    required = {"trial_id", "timestamp", "threshold", "candidates_scored", "emails_sent", "dry_run", "recruitment_results"}
+    required = {
+        "trial_id",
+        "timestamp",
+        "threshold",
+        "candidates_scored",
+        "emails_sent",
+        "dry_run",
+        "recruitment_results",
+    }
     assert required.issubset(result.keys())
 
 
@@ -151,6 +162,7 @@ async def test_score_eligible_threshold_parameter(engine, threshold):
 def test_candidate_result_typed_dict():
     """CandidateResult TypedDict should be importable and have expected keys."""
     from src.recruitment import CandidateResult
+
     candidate: CandidateResult = {
         "patient_id": "P001",
         "patient_name": "Alice Smith",
@@ -181,8 +193,10 @@ def test_send_recruitment_email_subject_contains_trial_name(engine):
     class MockSMTP:
         def __enter__(self):
             return self
+
         def __exit__(self, *args):
             return False
+
         def send_message(self, msg):
             sent_messages.append(msg)
 

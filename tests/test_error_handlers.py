@@ -39,10 +39,13 @@ class TestCustomValidationErrorHandler:
         resp = client.post("/patients", json={"first_name": "Only"})
         assert resp.status_code == 422
 
-    @pytest.mark.parametrize("endpoint,params", [
-        ("/patients", {"limit": 501}),
-        ("/trials", {"limit": 501}),
-    ])
+    @pytest.mark.parametrize(
+        "endpoint,params",
+        [
+            ("/patients", {"limit": 501}),
+            ("/trials", {"limit": 501}),
+        ],
+    )
     def test_limit_over_max_returns_422(self, client, endpoint, params):
         resp = client.get(endpoint, params=params)
         assert resp.status_code == 422
@@ -51,12 +54,15 @@ class TestCustomValidationErrorHandler:
 class TestAdminSeedEndpoint:
     def test_seed_endpoint_exists(self, client, db_session):
         from fastapi.testclient import TestClient
+
         from src.main import app
+
         safe_client = TestClient(app, raise_server_exceptions=False)
         resp = safe_client.post("/admin/seed")
         assert resp.status_code in (200, 403, 422, 500)
 
     def test_seed_route_is_registered(self, client):
         from src.main import app
+
         paths = [r.path for r in app.routes]
         assert "/admin/seed" in paths

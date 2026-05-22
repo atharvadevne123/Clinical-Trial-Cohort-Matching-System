@@ -1,4 +1,5 @@
 """Tests for ML enrollment prediction module."""
+
 from unittest.mock import patch
 
 import numpy as np
@@ -67,8 +68,14 @@ def test_prediction_probability_in_range(predictor, sample_features):
 
 def test_batch_predict_sorted_by_probability(predictor):
     patients = [
-        {"id": f"P{i}", "date_of_birth": "1970-01-01", "gender": "male",
-         "conditions": [], "medications": [], "num_exclusion_flags": i}
+        {
+            "id": f"P{i}",
+            "date_of_birth": "1970-01-01",
+            "gender": "male",
+            "conditions": [],
+            "medications": [],
+            "num_exclusion_flags": i,
+        }
         for i in range(5)
     ]
     results = predictor.predict_batch(patients, "T001")
@@ -83,10 +90,13 @@ def test_generate_training_data_shape():
     assert set(y).issubset({0, 1})
 
 
-@pytest.mark.parametrize("age,expected_mention", [
-    (55, "optimal range"),
-    (80, "75"),
-])
+@pytest.mark.parametrize(
+    "age,expected_mention",
+    [
+        (55, "optimal range"),
+        (80, "75"),
+    ],
+)
 def test_explain_factors_age(predictor, age, expected_mention):
     f = PatientFeatures(age=age)
     factors = predictor._explain(f)

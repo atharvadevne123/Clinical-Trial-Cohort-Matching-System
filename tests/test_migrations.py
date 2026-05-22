@@ -1,4 +1,5 @@
 """Tests for database migration runner."""
+
 import pytest
 from sqlalchemy import create_engine, text
 
@@ -10,16 +11,18 @@ def test_engine():
     eng = create_engine("sqlite:///:memory:")
     # Create required tables
     with eng.connect() as conn:
-        conn.execute(text(
-            "CREATE TABLE IF NOT EXISTS patient_trial_matches ("
-            "  id INTEGER PRIMARY KEY,"
-            "  patient_id TEXT,"
-            "  trial_id TEXT,"
-            "  letter_sent_date TEXT,"
-            "  enrollment_date TEXT,"
-            "  combined_score REAL"
-            ")"
-        ))
+        conn.execute(
+            text(
+                "CREATE TABLE IF NOT EXISTS patient_trial_matches ("
+                "  id INTEGER PRIMARY KEY,"
+                "  patient_id TEXT,"
+                "  trial_id TEXT,"
+                "  letter_sent_date TEXT,"
+                "  enrollment_date TEXT,"
+                "  combined_score REAL"
+                ")"
+            )
+        )
         conn.commit()
     return eng
 

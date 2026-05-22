@@ -60,8 +60,10 @@ class FHIRClient:
                 return resp
             except (httpx.ConnectError, httpx.TimeoutException) as exc:
                 last_exc = exc
-                wait = self._RETRY_BACKOFF * (2 ** attempt)
-                logger.debug("FHIR retry %d/%d after %.1fs: %s", attempt + 1, self._MAX_RETRIES, wait, exc)
+                wait = self._RETRY_BACKOFF * (2**attempt)
+                logger.debug(
+                    "FHIR retry %d/%d after %.1fs: %s", attempt + 1, self._MAX_RETRIES, wait, exc
+                )
                 time.sleep(wait)
             except httpx.HTTPStatusError:
                 raise
@@ -118,7 +120,9 @@ class FHIRClient:
             bundle = self._get_with_retry(url, params={"patient": patient_id}).json()
             return [entry["resource"] for entry in bundle.get("entry", [])]
         except Exception:
-            logger.warning("FHIR server unreachable – returning mock Medications for %s", patient_id)
+            logger.warning(
+                "FHIR server unreachable – returning mock Medications for %s", patient_id
+            )
             return self._mock_medications()
 
     # ------------------------------------------------------------------
@@ -247,8 +251,13 @@ class FHIRClient:
                 "resourceType": "Condition",
                 "id": "cond_mock_1",
                 "code": {
-                    "coding": [{"system": "http://hl7.org/fhir/sid/icd-10-cm", "code": "I48.91",
-                                "display": "Atrial Fibrillation"}],
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/sid/icd-10-cm",
+                            "code": "I48.91",
+                            "display": "Atrial Fibrillation",
+                        }
+                    ],
                     "text": "Atrial Fibrillation",
                 },
             }
@@ -263,8 +272,13 @@ class FHIRClient:
                 "id": "med_mock_1",
                 "status": "active",
                 "medicationCodeableConcept": {
-                    "coding": [{"system": "http://www.nlm.nih.gov/research/umls/rxnorm",
-                                "code": "B01AA03", "display": "Warfarin"}],
+                    "coding": [
+                        {
+                            "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                            "code": "B01AA03",
+                            "display": "Warfarin",
+                        }
+                    ],
                     "text": "Warfarin",
                 },
             }

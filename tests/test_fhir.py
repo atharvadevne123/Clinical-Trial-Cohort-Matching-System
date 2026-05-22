@@ -1,4 +1,5 @@
 """Tests for the FHIR R4 client."""
+
 from unittest.mock import patch
 
 import pytest

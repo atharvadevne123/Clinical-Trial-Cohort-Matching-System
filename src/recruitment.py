@@ -93,11 +93,15 @@ class RecruitmentEngine:
             scored: List[Dict[str, Any]] = []
 
             for p in patients:
-                already_enrolled = db.query(PatientTrialMatch).filter(
-                    PatientTrialMatch.patient_id == p.id,
-                    PatientTrialMatch.trial_id == trial_id,
-                    PatientTrialMatch.enrolled == True,  # noqa: E712
-                ).first()
+                already_enrolled = (
+                    db.query(PatientTrialMatch)
+                    .filter(
+                        PatientTrialMatch.patient_id == p.id,
+                        PatientTrialMatch.trial_id == trial_id,
+                        PatientTrialMatch.enrolled == True,  # noqa: E712
+                    )
+                    .first()
+                )
                 if already_enrolled:
                     continue
 
@@ -105,16 +109,18 @@ class RecruitmentEngine:
                 result = predictor.predict(features, str(p.id), trial_id)
 
                 if result.enrollment_probability >= threshold:
-                    scored.append({
-                        "patient_id": p.id,
-                        "patient_name": f"{p.first_name} {p.last_name}",
-                        "email": p.email or f"patient-{p.id}@trial.local",
-                        "score": result.enrollment_probability,
-                        "confidence": result.confidence,
-                        "recommendation": result.recommendation,
-                        "trial_id": trial_id,
-                        "trial_name": trial.name,
-                    })
+                    scored.append(
+                        {
+                            "patient_id": p.id,
+                            "patient_name": f"{p.first_name} {p.last_name}",
+                            "email": p.email or f"patient-{p.id}@trial.local",
+                            "score": result.enrollment_probability,
+                            "confidence": result.confidence,
+                            "recommendation": result.recommendation,
+                            "trial_id": trial_id,
+                            "trial_name": trial.name,
+                        }
+                    )
 
         return sorted(scored, key=lambda x: (-x["score"], x["patient_id"]))
 
@@ -153,7 +159,9 @@ class RecruitmentEngine:
             logger.warning("SMTP error for patient %s: %s", candidate["patient_id"], exc)
             return False
         except OSError as exc:
-            logger.warning("Network error sending email to patient %s: %s", candidate["patient_id"], exc)
+            logger.warning(
+                "Network error sending email to patient %s: %s", candidate["patient_id"], exc
+            )
             return False
 
     async def run_recruitment_batch(
@@ -194,13 +202,15 @@ class RecruitmentEngine:
                 if sent:
                     results["emails_sent"] += 1
 
-            results["recruitment_results"].append({
-                "patient_id": candidate["patient_id"],
-                "patient_name": candidate["patient_name"],
-                "score": round(candidate["score"], 4),
-                "confidence": candidate["confidence"],
-                "email_sent": sent,
-            })
+            results["recruitment_results"].append(
+                {
+                    "patient_id": candidate["patient_id"],
+                    "patient_name": candidate["patient_name"],
+                    "score": round(candidate["score"], 4),
+                    "confidence": candidate["confidence"],
+                    "email_sent": sent,
+                }
+            )
 
         return results
 
@@ -208,6 +218,7 @@ class RecruitmentEngine:
 # ------------------------------------------------------------------
 # CLI entry point
 # ------------------------------------------------------------------
+
 
 async def _main() -> None:
     """CLI entry point: dry-run recruitment batch for a demo trial."""
@@ -220,6 +231,7 @@ async def _main() -> None:
         dry_run=True,
     )
     import json
+
     print(json.dumps(results, indent=2, default=str))
 
 
