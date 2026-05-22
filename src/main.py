@@ -146,6 +146,12 @@ def root() -> Dict[str, str]:
     return {"message": "Clinical Trial Cohort Matching API", "version": "1.1.0", "docs": "/docs"}
 
 
+@app.get("/ping", tags=["Meta"])
+def ping() -> Dict[str, str]:
+    """Ultra-lightweight liveness probe that returns pong immediately."""
+    return {"ping": "pong"}
+
+
 @app.get("/health", tags=["Meta"])
 def health_check() -> Dict[str, str]:
     """Liveness probe — always returns healthy when the process is running."""
