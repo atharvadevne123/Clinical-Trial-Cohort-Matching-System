@@ -54,3 +54,27 @@ def reset_monitor(_key: Optional[str] = Security(_require_api_key)) -> Dict[str,
     monitor.reset()
     logger.info("Prediction monitor reset via API.")
     return {"status": "reset", "message": "Prediction monitor window cleared."}
+
+
+@router.post("/set-reference", summary="Set the reference distribution for drift detection")
+def set_reference(
+    payload: Dict[str, Any],
+    _key: Optional[str] = Security(_require_api_key),
+) -> Dict[str, Any]:
+    """Set the reference distribution from a list of enrollment probabilities.
+
+    Args:
+        payload: Dict with ``probabilities`` key containing a list of floats.
+
+    Returns:
+        Confirmation with count of reference samples set.
+
+    Raises:
+        HTTPException: 400 if ``probabilities`` key is missing or not a list.
+    """
+    probs = payload.get("probabilities")
+    if not isinstance(probs, list):
+        raise HTTPException(status_code=400, detail="'probabilities' must be a list of floats")
+    monitor.set_reference([float(p) for p in probs])
+    logger.info("Reference distribution set with %d samples via API.", len(probs))
+    return {"status": "ok", "reference_samples": len(probs)}
