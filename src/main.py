@@ -369,6 +369,23 @@ def get_trial(trial_id: str, db: Session = Depends(get_db)) -> Trial:
     return trial
 
 
+@app.delete("/trials/{trial_id}", tags=["Trials"],
+            dependencies=[Depends(require_api_key)])
+def delete_trial(trial_id: str, db: Session = Depends(get_db)) -> Dict[str, str]:
+    """Delete a clinical trial record by ID.
+
+    Raises:
+        HTTPException: 404 if the trial is not found.
+    """
+    trial = db.query(Trial).filter(Trial.id == trial_id).first()
+    if not trial:
+        raise HTTPException(status_code=404, detail="Trial not found")
+    db.delete(trial)
+    db.commit()
+    logger.info("Deleted trial %s", trial_id)
+    return {"deleted": trial_id}
+
+
 @app.get("/trials", response_model=List[TrialResponse], tags=["Trials"])
 def list_trials(
     skip: int = Query(0, ge=0),
