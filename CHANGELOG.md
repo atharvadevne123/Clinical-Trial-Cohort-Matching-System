@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-05-22
+
+### Added
+- `NOT_IN` operator: excludes patients whose field value appears in a comma-separated list.
+- `CONTAINS` operator: case-insensitive substring check on string fields.
+- `BETWEEN` operator: inclusive numeric range check using `"lo,hi"` value syntax.
+- `SUPPORTED_OPERATORS` list exported from `src/eligibility.py` for introspection.
+- `GET /trials/{id}/eligible-patients` endpoint returning eligible patient IDs for a trial.
+- `GET /operators` meta endpoint listing all supported eligibility criterion operators.
+- `X-Request-ID` response header echoed (or generated) on every response.
+- CI workflow: `ruff format --check .` added to lint step.
+- CI workflow: smoke test step verifying key endpoints on Python 3.11.
+
+### Changed
+- HTTP middleware docstring updated to reflect `X-Request-ID` injection.
+
 ## [1.2.0] - 2026-05-22
 
 ### Added
