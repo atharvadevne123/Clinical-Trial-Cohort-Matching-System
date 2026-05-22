@@ -1,4 +1,4 @@
-.PHONY: install test lint run docker-build docker-up clean
+.PHONY: install test test-fast test-integration lint lint-fix run docker-build docker-up docker-down clean seed coverage-ci type-check retrain benchmark
 
 install:
 	pip install --upgrade pip
@@ -48,3 +48,28 @@ retrain:
 
 benchmark:
 	python scripts/benchmark.py
+
+test-integration:
+	pytest tests/test_integration_e2e.py -v --tb=short
+
+validate-env:
+	@python3 -c "import os; missing=[v for v in ['API_KEY','DATABASE_URL'] if not os.environ.get(v)]; print('Missing env vars:', missing) if missing else print('All required env vars set.')"
+
+help:
+	@echo "Available targets:"
+	@echo "  install         Install Python dependencies"
+	@echo "  test            Run all tests with coverage"
+	@echo "  test-fast       Run tests skipping slow recruitment tests"
+	@echo "  test-integration Run only integration tests"
+	@echo "  lint            Run ruff linter"
+	@echo "  lint-fix        Run ruff linter with auto-fix"
+	@echo "  run             Start uvicorn dev server"
+	@echo "  docker-build    Build Docker image"
+	@echo "  docker-up       Start docker-compose stack"
+	@echo "  docker-down     Stop docker-compose stack"
+	@echo "  coverage-ci     Run tests with XML coverage report"
+	@echo "  type-check      Run mypy type checker"
+	@echo "  retrain         Run retraining pipeline"
+	@echo "  benchmark       Run performance benchmarks"
+	@echo "  validate-env    Check required environment variables"
+	@echo "  seed            Seed the database via API"
