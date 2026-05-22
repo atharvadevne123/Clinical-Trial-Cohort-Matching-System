@@ -466,7 +466,7 @@ def list_trials(
     if phase:
         q = q.filter(Trial.phase == phase)
     if status:
-        q = q.filter(Trial.recruitment_status == status)
+        q = q.filter(Trial.status == status)
     return q.offset(skip).limit(limit).all()
 
 
