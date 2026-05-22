@@ -6,7 +6,7 @@ suitable for the XGBoost enrollment prediction model.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -59,7 +59,7 @@ def extract_condition_flags(conditions: List[Any]) -> Dict[str, int]:
     }
 
 
-def compute_age(date_of_birth: Any) -> float:
+def compute_age(date_of_birth: Union[datetime, str, None]) -> float:
     """Compute patient age in years from date_of_birth.
 
     Args:
