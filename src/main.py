@@ -287,6 +287,23 @@ def get_patient(patient_id: str, db: Session = Depends(get_db)) -> Patient:
     return patient
 
 
+@app.delete("/patients/{patient_id}", tags=["Patients"],
+            dependencies=[Depends(require_api_key)])
+def delete_patient(patient_id: str, db: Session = Depends(get_db)) -> Dict[str, str]:
+    """Delete a patient record by ID.
+
+    Raises:
+        HTTPException: 404 if the patient is not found.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    db.delete(patient)
+    db.commit()
+    logger.info("Deleted patient %s", patient_id)
+    return {"deleted": patient_id}
+
+
 @app.get("/patients", response_model=List[PatientResponse], tags=["Patients"])
 def list_patients(
     skip: int = Query(0, ge=0),
