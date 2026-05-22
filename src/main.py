@@ -214,11 +214,23 @@ def healthz() -> Dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/readyz", tags=["Meta"])
+def readyz(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Readiness probe — returns ready only when the database is reachable."""
+    try:
+        db.execute(__import__("sqlalchemy").text("SELECT 1"))
+        return {"status": "ready", "database": "ok"}
+    except Exception as exc:
+        logger.error("Readiness check failed: %s", exc)
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=503, content={"status": "not_ready", "database": "error"})
+
+
 @app.get("/version", tags=["Meta"])
 def version() -> Dict[str, Any]:
     """Return API version and build metadata."""
     return {
-        "version": "1.1.0",
+        "version": "1.2.0",
         "api": "Clinical Trial Cohort Matching",
         "python_version": __import__("sys").version,
         "started_at": _START_TIME.isoformat(),
