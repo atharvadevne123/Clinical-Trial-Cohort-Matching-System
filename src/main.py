@@ -92,14 +92,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 # App
 # ------------------------------------------------------------------
 
+_OPENAPI_TAGS: list[Dict[str, Any]] = [
+    {"name": "Meta", "description": "Health, liveness, and runtime metadata endpoints."},
+    {"name": "Patients", "description": "CRUD operations for patient records."},
+    {"name": "Trials", "description": "CRUD operations for clinical trial records."},
+    {"name": "Matching", "description": "Rule-based and ML patient-trial matching."},
+    {"name": "NLP", "description": "Clinical note entity extraction and profiling."},
+    {"name": "FHIR", "description": "HL7 FHIR patient data import."},
+    {"name": "ML", "description": "Enrollment probability prediction and model info."},
+    {"name": "Monitoring", "description": "Prediction drift detection and monitoring."},
+    {"name": "Recruitment", "description": "Automated patient recruitment outreach."},
+]
+
 app = FastAPI(
     title="Clinical Trial Cohort Matching",
     description=(
         "Match patients to clinical trials using rule-based eligibility and "
-        "XGBoost ML enrollment prediction."
+        "XGBoost ML enrollment probability prediction with NLP and FHIR integration."
     ),
-    version="1.1.0",
+    version="1.2.0",
     lifespan=lifespan,
+    openapi_tags=_OPENAPI_TAGS,
 )
 
 _CORS_ORIGINS: list[str] = [
