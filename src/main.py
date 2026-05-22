@@ -6,6 +6,7 @@ evaluation and XGBoost ML enrollment prediction with NLP and FHIR integration.
 
 import logging
 import os
+import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -113,10 +114,14 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_correlation_id(request: Request, call_next: Any) -> Response:
-    """Inject a unique X-Correlation-ID header into every response."""
+    """Inject X-Correlation-ID and X-Process-Time headers into every response."""
     correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
+    start = time.perf_counter()
     response = await call_next(request)
+    elapsed = round((time.perf_counter() - start) * 1000, 2)
     response.headers["X-Correlation-ID"] = correlation_id
+    response.headers["X-Process-Time-Ms"] = str(elapsed)
+    logger.debug("%s %s -> %s (%.1fms)", request.method, request.url.path, response.status_code, elapsed)
     return response
 
 
