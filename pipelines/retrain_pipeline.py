@@ -76,13 +76,19 @@ class RetrainingPipeline:
         val_proba = model.predict_proba(X_val)[:, 1]
         auc = float(roc_auc_score(y_val, val_proba))
 
-        joblib.dump(model, self.model_path)
+        try:
+            joblib.dump(model, self.model_path)
+        except OSError as exc:
+            logger.error("Failed to persist model to %s: %s", self.model_path, exc)
+            return {"status": "error", "reason": f"Model save failed: {exc}"}
+
         logger.info("Model retrained: AUC=%.4f, samples=%d, path=%s", auc, len(X), self.model_path)
 
         return {
             "status": "success",
             "sample_count": len(X),
             "train_auc": round(auc, 4),
+            "val_samples": len(X_val),
             "model_path": self.model_path,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
