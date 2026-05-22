@@ -291,10 +291,17 @@ def get_patient(patient_id: str, db: Session = Depends(get_db)) -> Patient:
 def list_patients(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
+    gender: Optional[str] = Query(None, description="Filter by gender (male/female/other)"),
+    condition: Optional[str] = Query(None, description="Filter by ICD-10 condition code"),
     db: Session = Depends(get_db),
 ) -> List[Patient]:
-    """List patients with pagination."""
-    return db.query(Patient).offset(skip).limit(limit).all()
+    """List patients with optional gender and condition filters."""
+    q = db.query(Patient)
+    if gender:
+        q = q.filter(Patient.gender == gender.lower())
+    if condition:
+        q = q.filter(Patient.conditions.contains([{"code": condition}]))
+    return q.offset(skip).limit(limit).all()
 
 
 # ------------------------------------------------------------------
