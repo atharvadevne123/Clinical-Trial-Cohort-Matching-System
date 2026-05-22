@@ -20,7 +20,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
-from src.eligibility import matcher
+from src.eligibility import SUPPORTED_OPERATORS, matcher
 from src.fhir import fhir_client
 from src.ml_prediction import EnrollmentPredictor, create_ml_router, predictor
 from src.models import Patient, PatientTrialMatch, SessionLocal, Trial, init_db
@@ -238,6 +238,15 @@ def version() -> Dict[str, Any]:
         "api": "Clinical Trial Cohort Matching",
         "python_version": __import__("sys").version,
         "started_at": _START_TIME.isoformat(),
+    }
+
+
+@app.get("/operators", tags=["Meta"])
+def list_operators() -> Dict[str, Any]:
+    """Return the list of supported eligibility criterion operators."""
+    return {
+        "operators": SUPPORTED_OPERATORS,
+        "count": len(SUPPORTED_OPERATORS),
     }
 
 
