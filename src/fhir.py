@@ -6,6 +6,7 @@ deterministic mock data when the server is unreachable (e.g. during local dev).
 
 import logging
 import os
+import time
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -26,6 +27,9 @@ class FHIRClient:
         timeout: HTTP request timeout in seconds.
     """
 
+    _MAX_RETRIES: int = 3
+    _RETRY_BACKOFF: float = 0.5
+
     def __init__(
         self,
         base_url: str = "http://fhir-server:8080/fhir",
@@ -34,6 +38,34 @@ class FHIRClient:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         logger.info("FHIR client initialised: %s", self.base_url)
+
+    def _get_with_retry(self, url: str, **kwargs: Any) -> httpx.Response:
+        """Perform a GET request with exponential-backoff retries on transient errors.
+
+        Args:
+            url: Target URL.
+            **kwargs: Additional arguments forwarded to httpx.get.
+
+        Returns:
+            The successful httpx.Response.
+
+        Raises:
+            Exception: If all retry attempts fail.
+        """
+        last_exc: Exception = RuntimeError("No attempts made")
+        for attempt in range(self._MAX_RETRIES):
+            try:
+                resp = httpx.get(url, timeout=self.timeout, **kwargs)
+                resp.raise_for_status()
+                return resp
+            except (httpx.ConnectError, httpx.TimeoutException) as exc:
+                last_exc = exc
+                wait = self._RETRY_BACKOFF * (2 ** attempt)
+                logger.debug("FHIR retry %d/%d after %.1fs: %s", attempt + 1, self._MAX_RETRIES, wait, exc)
+                time.sleep(wait)
+            except httpx.HTTPStatusError:
+                raise
+        raise last_exc
 
     # ------------------------------------------------------------------
     # Resource fetchers
@@ -50,9 +82,7 @@ class FHIRClient:
         """
         url = f"{self.base_url}/Patient/{patient_id}"
         try:
-            resp = httpx.get(url, timeout=self.timeout)
-            resp.raise_for_status()
-            return resp.json()
+            return self._get_with_retry(url).json()
         except Exception:
             logger.warning("FHIR server unreachable – returning mock Patient for %s", patient_id)
             return self._mock_patient(patient_id)
@@ -68,9 +98,7 @@ class FHIRClient:
         """
         url = f"{self.base_url}/Condition"
         try:
-            resp = httpx.get(url, params={"patient": patient_id}, timeout=self.timeout)
-            resp.raise_for_status()
-            bundle = resp.json()
+            bundle = self._get_with_retry(url, params={"patient": patient_id}).json()
             return [entry["resource"] for entry in bundle.get("entry", [])]
         except Exception:
             logger.warning("FHIR server unreachable – returning mock Conditions for %s", patient_id)
@@ -87,9 +115,7 @@ class FHIRClient:
         """
         url = f"{self.base_url}/MedicationStatement"
         try:
-            resp = httpx.get(url, params={"patient": patient_id}, timeout=self.timeout)
-            resp.raise_for_status()
-            bundle = resp.json()
+            bundle = self._get_with_retry(url, params={"patient": patient_id}).json()
             return [entry["resource"] for entry in bundle.get("entry", [])]
         except Exception:
             logger.warning("FHIR server unreachable – returning mock Medications for %s", patient_id)
