@@ -7,6 +7,7 @@ Includes composite indexes for common query patterns and a UTC _now() helper.
 import logging
 import os
 from datetime import datetime, timezone
+from enum import Enum
 from typing import Optional
 
 from sqlalchemy import (
@@ -26,6 +27,16 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, relationship, sessionmaker
 
 logger = logging.getLogger(__name__)
+
+
+class MatchStatus(str, Enum):
+    """Enumeration of valid patient-trial match status values."""
+
+    PENDING = "PENDING"
+    ELIGIBLE = "ELIGIBLE"
+    INELIGIBLE = "INELIGIBLE"
+    ENROLLED = "ENROLLED"
+    WITHDRAWN = "WITHDRAWN"
 
 
 class Base(DeclarativeBase):
