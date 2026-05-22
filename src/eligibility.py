@@ -26,6 +26,7 @@ class EligibilityMatcher:
             "IN": self._in,
             "NOT_IN": self._not_in,
             "CONTAINS": self._contains,
+            "BETWEEN": self._between,
             "EXISTS": self._exists,
             "NOT_EXISTS": self._not_exists,
         }
@@ -269,6 +270,17 @@ class EligibilityMatcher:
             return False
         return str(b).lower() in str(a).lower()
 
+    def _between(self, a: Any, b: Any) -> bool:
+        """Return True if numeric a is within the range [lo, hi] given as 'lo,hi'."""
+        if a is None or b is None:
+            return False
+        try:
+            parts = str(b).split(",")
+            lo, hi = float(parts[0].strip()), float(parts[1].strip())
+            return lo <= float(a) <= hi
+        except (TypeError, ValueError, IndexError):
+            return False
+
     def _exists(self, a: Any, b: Any) -> bool:
         """Return True if a is not None."""
         return a is not None
@@ -308,5 +320,5 @@ __all__ = [
 ]
 
 SUPPORTED_OPERATORS: List[str] = [
-    "EQ", "GT", "LT", "GTE", "LTE", "IN", "NOT_IN", "CONTAINS", "EXISTS", "NOT_EXISTS",
+    "EQ", "GT", "LT", "GTE", "LTE", "IN", "NOT_IN", "CONTAINS", "BETWEEN", "EXISTS", "NOT_EXISTS",
 ]
