@@ -356,10 +356,17 @@ def get_trial(trial_id: str, db: Session = Depends(get_db)) -> Trial:
 def list_trials(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
+    phase: Optional[str] = Query(None, description="Filter by trial phase (e.g. 'Phase 2')"),
+    status: Optional[str] = Query(None, description="Filter by recruitment status"),
     db: Session = Depends(get_db),
 ) -> List[Trial]:
-    """List trials with pagination."""
-    return db.query(Trial).offset(skip).limit(limit).all()
+    """List trials with optional phase and status filters."""
+    q = db.query(Trial)
+    if phase:
+        q = q.filter(Trial.phase == phase)
+    if status:
+        q = q.filter(Trial.recruitment_status == status)
+    return q.offset(skip).limit(limit).all()
 
 
 # ------------------------------------------------------------------
