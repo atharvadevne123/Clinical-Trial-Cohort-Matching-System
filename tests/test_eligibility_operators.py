@@ -87,6 +87,38 @@ class TestContainsOperator:
         assert matcher._contains("anything", "") is True
 
 
+class TestBetweenOperator:
+    def test_between_within_range(self, matcher):
+        assert matcher._between(50, "18,65") is True
+
+    def test_between_at_lower_bound(self, matcher):
+        assert matcher._between(18, "18,65") is True
+
+    def test_between_at_upper_bound(self, matcher):
+        assert matcher._between(65, "18,65") is True
+
+    def test_between_below_range(self, matcher):
+        assert matcher._between(17, "18,65") is False
+
+    def test_between_above_range(self, matcher):
+        assert matcher._between(66, "18,65") is False
+
+    def test_between_none_value(self, matcher):
+        assert matcher._between(None, "18,65") is False
+
+    def test_between_malformed_range(self, matcher):
+        assert matcher._between(40, "not-a-range") is False
+
+    def test_between_as_inclusion_criterion(self, matcher):
+        patient = {**PATIENT, "date_of_birth": "1980-01-01"}
+        trial = {
+            "inclusion_criteria": [{"field": "age", "operator": "BETWEEN", "value": "18,65"}],
+            "exclusion_criteria": [],
+        }
+        result = matcher.check_match(patient, trial)
+        assert result["match_score"] > 0
+
+
 class TestSupportedOperators:
     def test_supported_operators_contains_not_in(self):
         assert "NOT_IN" in SUPPORTED_OPERATORS
@@ -103,3 +135,9 @@ class TestSupportedOperators:
     def test_all_supported_operators_registered(self, matcher):
         for op in SUPPORTED_OPERATORS:
             assert op in matcher.operators, f"Operator {op} not registered"
+
+    def test_supported_operators_contains_between(self):
+        assert "BETWEEN" in SUPPORTED_OPERATORS
+
+    def test_matcher_has_between_key(self, matcher):
+        assert "BETWEEN" in matcher.operators
