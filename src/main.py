@@ -776,6 +776,34 @@ def get_eligible_trials_for_patient(
     }
 
 
+@app.get("/trials/{trial_id}/eligible-patients", tags=["Matching"])
+def get_eligible_patients_for_trial(
+    trial_id: str, db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Return all patients with an ELIGIBLE match record for this trial.
+
+    Raises:
+        HTTPException: 404 if the trial is not found.
+    """
+    if not db.query(Trial).filter(Trial.id == trial_id).first():
+        raise HTTPException(status_code=404, detail="Trial not found")
+    eligible_matches = (
+        db.query(PatientTrialMatch)
+        .filter(
+            PatientTrialMatch.trial_id == trial_id,
+            PatientTrialMatch.match_status == "ELIGIBLE",
+        )
+        .order_by(PatientTrialMatch.combined_score.desc())
+        .all()
+    )
+    patient_ids = [m.patient_id for m in eligible_matches]
+    return {
+        "trial_id": trial_id,
+        "eligible_patient_count": len(patient_ids),
+        "patient_ids": patient_ids,
+    }
+
+
 # ------------------------------------------------------------------
 # NLP
 # ------------------------------------------------------------------
