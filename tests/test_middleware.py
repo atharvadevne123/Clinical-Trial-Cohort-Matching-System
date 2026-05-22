@@ -1,10 +1,32 @@
-"""Tests for GZip, CORS, and request timing middleware."""
+"""Tests for GZip, CORS, request timing, and request ID middleware."""
 
 from __future__ import annotations
 
 import os
+import uuid
 
 import pytest
+
+
+class TestRequestIdHeader:
+    def test_response_has_request_id(self, client):
+        resp = client.get("/ping")
+        assert "x-request-id" in resp.headers
+
+    def test_provided_request_id_echoed(self, client):
+        custom_id = "test-request-123"
+        resp = client.get("/ping", headers={"X-Request-ID": custom_id})
+        assert resp.headers["x-request-id"] == custom_id
+
+    def test_auto_generated_request_id_is_uuid(self, client):
+        resp = client.get("/ping")
+        rid = resp.headers["x-request-id"]
+        uuid.UUID(rid)
+
+    def test_request_id_differs_per_request(self, client):
+        resp1 = client.get("/ping")
+        resp2 = client.get("/ping")
+        assert resp1.headers["x-request-id"] != resp2.headers["x-request-id"]
 
 
 class TestProcessTimeHeader:
