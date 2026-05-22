@@ -625,6 +625,22 @@ def check_match(
     }
 
 
+@app.get("/matches", tags=["Matching"])
+def list_all_matches(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
+    status: Optional[str] = Query(None, description="Filter by match_status"),
+    db: Session = Depends(get_db),
+) -> Dict[str, Any]:
+    """List all match records across all patients and trials with optional status filter."""
+    q = db.query(PatientTrialMatch)
+    if status:
+        q = q.filter(PatientTrialMatch.match_status == status.upper())
+    total = q.count()
+    matches = q.order_by(PatientTrialMatch.combined_score.desc()).offset(skip).limit(limit).all()
+    return {"total": total, "skip": skip, "limit": limit, "matches": matches}
+
+
 @app.get("/matches/{trial_id}", tags=["Matching"])
 def get_trial_matches(
     trial_id: str,
