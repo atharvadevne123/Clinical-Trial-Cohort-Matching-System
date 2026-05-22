@@ -149,8 +149,11 @@ class RecruitmentEngine:
                 server.send_message(msg)
             logger.info("Recruitment email sent to patient %s", candidate["patient_id"])
             return True
-        except Exception as exc:
-            logger.warning("Email failed for patient %s: %s", candidate["patient_id"], exc)
+        except smtplib.SMTPException as exc:
+            logger.warning("SMTP error for patient %s: %s", candidate["patient_id"], exc)
+            return False
+        except OSError as exc:
+            logger.warning("Network error sending email to patient %s: %s", candidate["patient_id"], exc)
             return False
 
     async def run_recruitment_batch(
