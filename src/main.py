@@ -610,20 +610,8 @@ def check_match(
     if not trial:
         raise HTTPException(status_code=404, detail="Trial not found")
 
-    patient_dict: Dict[str, Any] = {
-        "id": patient.id,
-        "first_name": patient.first_name,
-        "last_name": patient.last_name,
-        "date_of_birth": patient.date_of_birth,
-        "gender": patient.gender,
-        "conditions": patient.conditions or [],
-        "medications": patient.medications or [],
-    }
-    trial_dict: Dict[str, Any] = {
-        "id": trial.id,
-        "inclusion_criteria": trial.inclusion_criteria or [],
-        "exclusion_criteria": trial.exclusion_criteria or [],
-    }
+    patient_dict = _patient_to_dict(patient)
+    trial_dict = _trial_to_dict(trial)
 
     rule_result = matcher.check_match(patient_dict, trial_dict)
     features = EnrollmentPredictor._dict_to_features(patient_dict)
