@@ -29,8 +29,10 @@ from src.schemas import (
     ClinicalNoteRequest,
     PatientCreate,
     PatientResponse,
+    PatientUpdate,
     TrialCreate,
     TrialResponse,
+    TrialUpdate,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -284,6 +286,29 @@ def get_patient(patient_id: str, db: Session = Depends(get_db)) -> Patient:
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
+    return patient
+
+
+@app.patch("/patients/{patient_id}", response_model=PatientResponse, tags=["Patients"],
+           dependencies=[Depends(require_api_key)])
+def update_patient(
+    patient_id: str, update: PatientUpdate, db: Session = Depends(get_db)
+) -> Patient:
+    """Partially update a patient record.
+
+    Only provided fields are updated; omitted fields remain unchanged.
+
+    Raises:
+        HTTPException: 404 if the patient is not found.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    for field, value in update.model_dump(exclude_none=True).items():
+        setattr(patient, field, value)
+    db.commit()
+    db.refresh(patient)
+    logger.info("Updated patient %s", patient_id)
     return patient
 
 
