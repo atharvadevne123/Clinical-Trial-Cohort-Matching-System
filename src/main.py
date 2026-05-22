@@ -451,6 +451,75 @@ def list_trials(
     return q.offset(skip).limit(limit).all()
 
 
+@app.post("/patients/bulk", tags=["Patients"],
+          dependencies=[Depends(require_api_key)])
+def bulk_create_patients(
+    patients: List[PatientCreate], db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Create multiple patient records in a single request (max 100).
+
+    Skips any patient whose ID already exists and reports it in the skipped list.
+
+    Raises:
+        HTTPException: 400 if more than 100 records are submitted.
+    """
+    if len(patients) > 100:
+        raise HTTPException(status_code=400, detail="Bulk create limited to 100 patients per request")
+    created_ids: List[str] = []
+    skipped_ids: List[str] = []
+    for p in patients:
+        if db.query(Patient).filter(Patient.id == p.id).first():
+            skipped_ids.append(p.id)
+            continue
+        db.add(Patient(
+            id=p.id, first_name=p.first_name, last_name=p.last_name,
+            date_of_birth=p.date_of_birth, gender=p.gender,
+            email=p.email, phone=p.phone, postal_code=p.postal_code,
+            conditions=p.conditions or [], medications=p.medications or [],
+            allergies=p.allergies or [],
+        ))
+        created_ids.append(p.id)
+    db.commit()
+    logger.info("Bulk created %d patients, skipped %d", len(created_ids), len(skipped_ids))
+    return {"created": len(created_ids), "skipped": len(skipped_ids),
+            "created_ids": created_ids, "skipped_ids": skipped_ids}
+
+
+@app.post("/trials/bulk", tags=["Trials"],
+          dependencies=[Depends(require_api_key)])
+def bulk_create_trials(
+    trials: List[TrialCreate], db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Create multiple trial records in a single request (max 50).
+
+    Skips any trial whose ID already exists and reports it in the skipped list.
+
+    Raises:
+        HTTPException: 400 if more than 50 records are submitted.
+    """
+    if len(trials) > 50:
+        raise HTTPException(status_code=400, detail="Bulk create limited to 50 trials per request")
+    created_ids: List[str] = []
+    skipped_ids: List[str] = []
+    for t in trials:
+        if db.query(Trial).filter(Trial.id == t.id).first():
+            skipped_ids.append(t.id)
+            continue
+        db.add(Trial(
+            id=t.id, name=t.name, description=t.description, sponsor=t.sponsor,
+            phase=t.phase, primary_condition=t.primary_condition,
+            target_enrollment=t.target_enrollment,
+            inclusion_criteria=t.inclusion_criteria or [],
+            exclusion_criteria=t.exclusion_criteria or [],
+            start_date=t.start_date, completion_date=t.completion_date,
+        ))
+        created_ids.append(t.id)
+    db.commit()
+    logger.info("Bulk created %d trials, skipped %d", len(created_ids), len(skipped_ids))
+    return {"created": len(created_ids), "skipped": len(skipped_ids),
+            "created_ids": created_ids, "skipped_ids": skipped_ids}
+
+
 # ------------------------------------------------------------------
 # Eligibility matching (rule-based + ML)
 # ------------------------------------------------------------------
