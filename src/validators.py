@@ -78,23 +78,14 @@ def validate_date_range(
     return True, None
 
 
-__all__ = [
-    "is_valid_icd10",
-    "is_valid_atc",
-    "validate_enrollment_probability",
-    "validate_date_range",
-    "validate_patient_conditions",
-]
-
-
 def validate_patient_conditions(conditions: List[Any]) -> List[str]:
-    """Return a list of warning messages for conditions with invalid codes.
+    """Return a list of warning messages for conditions with invalid ICD-10 codes.
 
     Args:
-        conditions: List of condition dicts or code strings.
+        conditions: List of condition dicts (each with a ``code`` key) or code strings.
 
     Returns:
-        List of warning strings (empty if all codes are valid).
+        List of warning strings; empty if all codes are valid or absent.
     """
     warnings: List[str] = []
     for cond in conditions:
@@ -102,3 +93,54 @@ def validate_patient_conditions(conditions: List[Any]) -> List[str]:
         if code and not is_valid_icd10(str(code)):
             warnings.append(f"Non-standard ICD-10 code: {code!r}")
     return warnings
+
+
+def validate_patient_medications(medications: List[Any]) -> List[str]:
+    """Return a list of warning messages for medications with invalid ATC codes.
+
+    Args:
+        medications: List of medication dicts (each with a ``code`` key) or code strings.
+
+    Returns:
+        List of warning strings; empty if all codes are valid or absent.
+    """
+    warnings: List[str] = []
+    for med in medications:
+        code = med.get("code") or med.get("atc_code") if isinstance(med, dict) else str(med)
+        if code and not is_valid_atc(str(code)):
+            warnings.append(f"Non-standard ATC code: {code!r}")
+    return warnings
+
+
+def validate_criteria_list(criteria: List[Any]) -> List[str]:
+    """Return warning messages for trial criteria entries missing required fields.
+
+    Args:
+        criteria: List of criterion dicts; each should have ``field`` and ``operator``.
+
+    Returns:
+        List of warning strings; empty if all entries are well-formed.
+    """
+    warnings: List[str] = []
+    valid_operators = {"EQ", "GT", "LT", "GTE", "LTE", "IN", "EXISTS", "NOT_EXISTS"}
+    for i, crit in enumerate(criteria):
+        if not isinstance(crit, dict):
+            warnings.append(f"Criterion[{i}] is not a dict")
+            continue
+        if not crit.get("field"):
+            warnings.append(f"Criterion[{i}] missing 'field'")
+        op = str(crit.get("operator", "")).upper()
+        if op and op not in valid_operators:
+            warnings.append(f"Criterion[{i}] unknown operator {op!r}")
+    return warnings
+
+
+__all__ = [
+    "is_valid_icd10",
+    "is_valid_atc",
+    "validate_enrollment_probability",
+    "validate_date_range",
+    "validate_patient_conditions",
+    "validate_patient_medications",
+    "validate_criteria_list",
+]
