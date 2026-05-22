@@ -394,6 +394,29 @@ def get_trial(trial_id: str, db: Session = Depends(get_db)) -> Trial:
     return trial
 
 
+@app.patch("/trials/{trial_id}", response_model=TrialResponse, tags=["Trials"],
+           dependencies=[Depends(require_api_key)])
+def update_trial(
+    trial_id: str, update: TrialUpdate, db: Session = Depends(get_db)
+) -> Trial:
+    """Partially update a clinical trial record.
+
+    Only provided fields are updated; omitted fields remain unchanged.
+
+    Raises:
+        HTTPException: 404 if the trial is not found.
+    """
+    trial = db.query(Trial).filter(Trial.id == trial_id).first()
+    if not trial:
+        raise HTTPException(status_code=404, detail="Trial not found")
+    for field, value in update.model_dump(exclude_none=True).items():
+        setattr(trial, field, value)
+    db.commit()
+    db.refresh(trial)
+    logger.info("Updated trial %s", trial_id)
+    return trial
+
+
 @app.delete("/trials/{trial_id}", tags=["Trials"],
             dependencies=[Depends(require_api_key)])
 def delete_trial(trial_id: str, db: Session = Depends(get_db)) -> Dict[str, str]:
