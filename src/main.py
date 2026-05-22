@@ -13,8 +13,10 @@ from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, Security
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
@@ -126,6 +128,28 @@ async def add_correlation_id(request: Request, call_next: Any) -> Response:
 
 
 app.include_router(create_ml_router())
+
+
+# ------------------------------------------------------------------
+# Error handlers
+# ------------------------------------------------------------------
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Return a structured JSON body for 404 Not Found responses."""
+    return JSONResponse(
+        status_code=404,
+        content={"error": "not_found", "detail": str(getattr(exc, "detail", "Resource not found")), "path": request.url.path},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Return a structured JSON body for 422 validation errors."""
+    return JSONResponse(
+        status_code=422,
+        content={"error": "validation_error", "detail": exc.errors(), "path": request.url.path},
+    )
 
 
 # ------------------------------------------------------------------
