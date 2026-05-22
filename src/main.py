@@ -85,6 +85,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as exc:
         logger.error("Database init failed: %s", exc)
         raise
+    db_url = os.environ.get("DATABASE_URL", "sqlite")
+    logger.info(
+        "Clinical Trial Cohort Matching API v1.2.0 started | DB=%s | CORS=%s",
+        db_url.split("://")[0] if "://" in db_url else db_url,
+        os.environ.get("CORS_ORIGINS", "*"),
+    )
     yield
 
 
