@@ -24,6 +24,7 @@ class EligibilityMatcher:
             "GTE": self._gte,
             "LTE": self._lte,
             "IN": self._in,
+            "NOT_IN": self._not_in,
             "EXISTS": self._exists,
             "NOT_EXISTS": self._not_exists,
         }
@@ -254,6 +255,13 @@ class EligibilityMatcher:
             return any(str(item) in options for item in a)
         return str(a) in options
 
+    def _not_in(self, a: Any, b: Any) -> bool:
+        """Return True if a does not appear in comma-separated b."""
+        options = [s.strip() for s in str(b).split(",")]
+        if isinstance(a, list):
+            return not any(str(item) in options for item in a)
+        return str(a) not in options
+
     def _exists(self, a: Any, b: Any) -> bool:
         """Return True if a is not None."""
         return a is not None
@@ -284,4 +292,14 @@ class EligibilityMatcher:
 
 matcher = EligibilityMatcher()
 
-__all__ = ["EligibilityMatcher", "matcher", "_INCLUSION_WEIGHT", "_EXCLUSION_WEIGHT"]
+__all__ = [
+    "EligibilityMatcher",
+    "matcher",
+    "_INCLUSION_WEIGHT",
+    "_EXCLUSION_WEIGHT",
+    "SUPPORTED_OPERATORS",
+]
+
+SUPPORTED_OPERATORS: List[str] = [
+    "EQ", "GT", "LT", "GTE", "LTE", "IN", "NOT_IN", "EXISTS", "NOT_EXISTS",
+]
