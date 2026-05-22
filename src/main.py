@@ -24,6 +24,7 @@ from src.eligibility import matcher
 from src.fhir import fhir_client
 from src.ml_prediction import EnrollmentPredictor, create_ml_router, predictor
 from src.models import Patient, PatientTrialMatch, SessionLocal, Trial, init_db
+from src.monitoring_router import router as monitoring_router
 from src.nlp import nlp_processor
 from src.schemas import (
     ClinicalNoteRequest,
@@ -149,6 +150,7 @@ async def add_correlation_id(request: Request, call_next: Any) -> Response:
 
 
 app.include_router(create_ml_router())
+app.include_router(monitoring_router)
 
 
 # ------------------------------------------------------------------
