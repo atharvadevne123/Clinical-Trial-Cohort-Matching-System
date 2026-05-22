@@ -7,13 +7,32 @@ using the Kolmogorov-Smirnov test.
 import logging
 import os
 from collections import deque
-from typing import Deque, Dict, List, Optional
+from typing import Deque, Dict, List, Optional, TypedDict
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 _DRIFT_THRESHOLD: float = float(os.environ.get("DRIFT_THRESHOLD", "0.05"))
+
+
+class DriftResult(TypedDict):
+    """Return type for PredictionMonitor.check_drift()."""
+
+    drift_detected: bool
+    ks_statistic: float
+    p_value: float
+    sample_size: int
+
+
+class SummaryResult(TypedDict):
+    """Return type for PredictionMonitor.summary()."""
+
+    count: int
+    mean: Optional[float]
+    std: Optional[float]
+    min: Optional[float]
+    max: Optional[float]
 
 
 class PredictionMonitor:
