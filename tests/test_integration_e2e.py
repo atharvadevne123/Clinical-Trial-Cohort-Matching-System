@@ -22,7 +22,6 @@ def override_get_db():
         db.close()
 
 
-app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 PATIENT_ID = "INTG_P001"
@@ -31,6 +30,7 @@ TRIAL_ID = "INTG_T001"
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_data():
+    app.dependency_overrides[get_db] = override_get_db
     db = TestSession()
     # Clean up any leftover data
     db.query(Patient).filter(Patient.id == PATIENT_ID).delete()
