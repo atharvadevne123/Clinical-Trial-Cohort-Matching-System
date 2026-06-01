@@ -127,3 +127,39 @@ def test_summary_stats_accuracy():
     s = m.summary()
     expected_mean = round(float(np.mean(data)), 4)
     assert abs(s["mean"] - expected_mean) < 1e-4
+
+
+def test_set_reference_updates_reference(monitor):
+    monitor.set_reference([0.3, 0.4, 0.5])
+    assert monitor.reference is not None
+    assert len(monitor.reference) == 3
+
+
+def test_reset_preserves_reference(monitor):
+    monitor.set_reference([0.5] * 50)
+    monitor.record(0.7)
+    monitor.reset()
+    assert monitor.reference is not None
+    assert len(monitor.predictions) == 0
+
+
+@pytest.mark.parametrize(
+    "data,expected_min,expected_max",
+    [
+        ([0.1, 0.5, 0.9], 0.1, 0.9),
+        ([0.5, 0.5, 0.5], 0.5, 0.5),
+        ([0.0, 1.0], 0.0, 1.0),
+    ],
+)
+def test_summary_min_max(data, expected_min, expected_max):
+    m = PredictionMonitor()
+    for v in data:
+        m.record(v)
+    s = m.summary()
+    assert abs(s["min"] - expected_min) < 1e-4
+    assert abs(s["max"] - expected_max) < 1e-4
+
+
+def test_check_drift_message_on_insufficient_data(monitor):
+    result = monitor.check_drift()
+    assert "message" in result or result["drift_detected"] is False
