@@ -206,7 +206,7 @@ def get_db() -> Session:
 @app.get("/", tags=["Meta"])
 def root() -> Dict[str, str]:
     """Return API name and version metadata."""
-    return {"message": "Clinical Trial Cohort Matching API", "version": "1.1.0", "docs": "/docs"}
+    return {"message": "Clinical Trial Cohort Matching API", "version": "1.2.0", "docs": "/docs"}
 
 
 @app.get("/ping", tags=["Meta"])
