@@ -143,6 +143,24 @@ class PredictionMonitor:
         self.predictions.clear()
         logger.info("Prediction monitor window reset.")
 
+    def percentile(self, q: float) -> Optional[float]:
+        """Return the q-th percentile of the current rolling window.
+
+        Args:
+            q: Percentile to compute (0–100).
+
+        Returns:
+            The percentile value, or None if the window is empty.
+        """
+        if not self.predictions:
+            return None
+        return float(np.percentile(list(self.predictions), q))
+
+    def clear_reference(self) -> None:
+        """Remove the reference distribution."""
+        self.reference = None
+        logger.info("Reference distribution cleared.")
+
 
 monitor = PredictionMonitor()
 
