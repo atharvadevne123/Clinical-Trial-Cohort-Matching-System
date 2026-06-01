@@ -74,3 +74,37 @@ def test_fetch_complete_patient_profile_returns_dict(fhir):
 def test_fhir_client_default_url():
     client = FHIRClient()
     assert "fhir" in client.base_url.lower()
+
+
+def test_parse_patient_missing_name_fields(fhir):
+    fhir_data = {"id": "pt-3", "name": [], "birthDate": "1975-01-01", "gender": "unknown"}
+    parsed = fhir.parse_patient(fhir_data)
+    assert "id" in parsed or "first_name" in parsed
+
+
+@pytest.mark.parametrize("patient_id", ["patient-001", "patient-002", "patient-abc"])
+def test_get_patient_mock_returns_dict_for_various_ids(fhir, patient_id):
+    with patch("httpx.get", side_effect=Exception("Connection refused")):
+        result = fhir.get_patient(patient_id)
+    assert isinstance(result, dict)
+    assert "id" in result
+
+
+def test_fetch_complete_profile_includes_all_sections(fhir):
+    with patch("httpx.get", side_effect=Exception("Connection refused")):
+        profile = fhir.fetch_complete_patient_profile("patient-test")
+    for key in ("conditions", "medications"):
+        assert key in profile
+        assert isinstance(profile[key], list)
+
+
+def test_fhir_client_custom_base_url():
+    client = FHIRClient(base_url="http://custom-fhir.local/r4")
+    assert client.base_url == "http://custom-fhir.local/r4"
+
+
+def test_get_patient_conditions_mock_structure(fhir):
+    with patch("httpx.get", side_effect=Exception("Connection refused")):
+        conditions = fhir.get_patient_conditions("pt-mock")
+    for cond in conditions:
+        assert "code" in cond or "name" in cond
