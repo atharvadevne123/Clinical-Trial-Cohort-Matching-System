@@ -135,3 +135,46 @@ def test_dict_to_features_defaults_missing_fields():
     assert f.age == 50.0
     assert f.bmi == 25.0
     assert f.distance_to_site_km == 50.0
+
+
+@pytest.mark.parametrize(
+    "gender,expected_male",
+    [("male", 1), ("female", 0), ("MALE", 1), ("other", 0), ("", 0)],
+)
+def test_dict_to_features_gender_mapping(gender, expected_male):
+    patient = {"gender": gender, "conditions": [], "medications": []}
+    f = EnrollmentPredictor._dict_to_features(patient)
+    assert f.gender_male == expected_male
+
+
+@pytest.mark.parametrize("prob", [0.0, 0.5, 1.0])
+def test_predict_probability_bounds(predictor, prob):
+    with patch.object(predictor, "_rule_based", return_value=prob):
+        predictor.model = None
+        f = PatientFeatures(age=45)
+        result = predictor.predict(f, "P1", "T1")
+    assert 0.0 <= result.enrollment_probability <= 1.0
+
+
+def test_predict_confidence_levels(predictor):
+    for prob, expected_conf in [(0.9, "high"), (0.65, "medium"), (0.3, "low")]:
+        with patch.object(predictor, "_rule_based", return_value=prob):
+            predictor.model = None
+            f = PatientFeatures(age=45)
+            result = predictor.predict(f, "P1", "T1")
+        assert result.confidence == expected_conf
+
+
+def test_patient_features_defaults():
+    f = PatientFeatures()
+    assert f.age == 50.0
+    assert f.gender_male == 0
+    assert f.bmi == 25.0
+
+
+def test_prediction_result_has_required_fields(predictor, sample_features):
+    result = predictor.predict(sample_features, "TEST_P", "TEST_T")
+    assert hasattr(result, "enrollment_probability")
+    assert hasattr(result, "confidence")
+    assert hasattr(result, "recommendation")
+    assert hasattr(result, "factors")
