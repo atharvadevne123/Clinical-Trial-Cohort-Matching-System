@@ -151,3 +151,40 @@ def test_rule_based_returns_valid_probability(predictor, age, expected_range):
     f = PatientFeatures(age=age)
     prob = predictor._rule_based(f)
     assert expected_range[0] <= prob <= expected_range[1]
+
+
+def test_predict_batch_empty_list(predictor):
+    predictor.model = None
+    results = predictor.predict_batch([], "T_EMPTY")
+    assert results == []
+
+
+def test_predict_batch_single_patient(predictor):
+    predictor.model = None
+    patients = [{"id": "P_SINGLE", "date_of_birth": "1975-01-01", "gender": "male", "conditions": [], "medications": []}]
+    results = predictor.predict_batch(patients, "T_SINGLE")
+    assert len(results) == 1
+    assert results[0].patient_id == "P_SINGLE"
+
+
+@pytest.mark.parametrize("num_patients", [1, 3, 5, 10])
+def test_predict_batch_result_count(predictor, num_patients):
+    predictor.model = None
+    patients = [{"id": f"P{i}", "conditions": [], "medications": []} for i in range(num_patients)]
+    results = predictor.predict_batch(patients, "T_COUNT")
+    assert len(results) == num_patients
+
+
+def test_dict_to_features_multiple_conditions(predictor):
+    patient = {
+        "conditions": [
+            {"code": "E11", "name": "diabetes"},
+            {"code": "I10", "name": "hypertension"},
+            {"code": "C50", "name": "cancer"},
+        ],
+        "medications": [],
+    }
+    f = EnrollmentPredictor._dict_to_features(patient)
+    assert f.has_diabetes == 1
+    assert f.has_hypertension == 1
+    assert f.has_cancer == 1
