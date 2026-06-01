@@ -207,3 +207,32 @@ def test_list_patients_with_limit():
     response = client.get("/patients?limit=5&offset=0")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_patients_count_endpoint():
+    response = client.get("/patients/count")
+    assert response.status_code == 200
+    data = response.json()
+    assert "count" in data
+    assert isinstance(data["count"], int)
+    assert data["count"] >= 0
+
+
+def test_trials_count_endpoint():
+    response = client.get("/trials/count")
+    assert response.status_code == 200
+    data = response.json()
+    assert "count" in data
+    assert isinstance(data["count"], int)
+
+
+def test_patients_count_with_gender_filter():
+    response = client.get("/patients/count?gender=female")
+    assert response.status_code == 200
+    assert "count" in response.json()
+
+
+def test_trials_count_with_phase_filter():
+    response = client.get("/trials/count?phase=Phase%202")
+    assert response.status_code == 200
+    assert "count" in response.json()
