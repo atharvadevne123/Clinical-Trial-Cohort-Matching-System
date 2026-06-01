@@ -110,3 +110,29 @@ class TestRecruitmentEngineInit:
         engine = RecruitmentEngine(smtp_host=host, smtp_port=port)
         assert engine.smtp_host == host
         assert engine.smtp_port == port
+
+
+class TestValidateProbability:
+    @pytest.mark.parametrize(
+        "score,expected",
+        [
+            (0.0, True),
+            (0.5, True),
+            (1.0, True),
+            (-0.1, False),
+            (1.1, False),
+            (0.999, True),
+        ],
+    )
+    def test_validate_probability_parametrized(self, score, expected):
+        engine = RecruitmentEngine()
+        assert engine.validate_probability(score) == expected
+
+    def test_validate_probability_with_int(self):
+        engine = RecruitmentEngine()
+        assert engine.validate_probability(1) is True
+        assert engine.validate_probability(0) is True
+
+    def test_validate_probability_with_string_returns_false(self):
+        engine = RecruitmentEngine()
+        assert engine.validate_probability("0.5") is False  # type: ignore[arg-type]
