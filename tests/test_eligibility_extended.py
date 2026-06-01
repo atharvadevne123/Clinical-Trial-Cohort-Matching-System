@@ -310,3 +310,51 @@ def test_gte_operator(matcher):
     assert matcher._gte(5, 5) is True
     assert matcher._gte(6, 5) is True
     assert matcher._gte(4, 5) is False
+
+
+def test_count_eligible_all_match(matcher):
+    patients = [
+        {"id": "P1", "conditions": [{"code": "I10"}], "medications": []},
+        {"id": "P2", "conditions": [{"code": "I10"}], "medications": []},
+    ]
+    trial = {
+        "id": "T_CE",
+        "inclusion_criteria": [{"field": "condition:I10", "operator": "EXISTS", "value": None}],
+        "exclusion_criteria": [],
+    }
+    assert matcher.count_eligible(patients, trial) == 2
+
+
+def test_count_eligible_none_match(matcher):
+    patients = [
+        {"id": "P1", "conditions": [], "medications": []},
+        {"id": "P2", "conditions": [], "medications": []},
+    ]
+    trial = {
+        "id": "T_CE2",
+        "inclusion_criteria": [{"field": "condition:I10", "operator": "EXISTS", "value": None}],
+        "exclusion_criteria": [],
+    }
+    assert matcher.count_eligible(patients, trial) == 0
+
+
+def test_count_eligible_empty_patients(matcher):
+    trial = {"id": "T_CE3", "inclusion_criteria": [], "exclusion_criteria": []}
+    assert matcher.count_eligible([], trial) == 0
+
+
+@pytest.mark.parametrize("n_eligible", [0, 1, 3])
+def test_count_eligible_parametrized(matcher, n_eligible):
+    patients = [
+        {"id": f"P{i}", "conditions": [{"code": "I10"}], "medications": []}
+        for i in range(n_eligible)
+    ] + [
+        {"id": f"P_no{i}", "conditions": [], "medications": []}
+        for i in range(5 - n_eligible)
+    ]
+    trial = {
+        "id": "T_PARAM",
+        "inclusion_criteria": [{"field": "condition:I10", "operator": "EXISTS", "value": None}],
+        "exclusion_criteria": [],
+    }
+    assert matcher.count_eligible(patients, trial) == n_eligible
