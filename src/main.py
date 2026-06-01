@@ -358,6 +358,18 @@ def create_patient(patient: PatientCreate, db: Session = Depends(get_db)) -> Pat
     return db_patient
 
 
+@app.get("/patients/count", tags=["Patients"])
+def count_patients(
+    gender: Optional[str] = Query(None, description="Filter by gender (male/female/other)"),
+    db: Session = Depends(get_db),
+) -> Dict[str, int]:
+    """Return the total number of patient records, optionally filtered by gender."""
+    q = db.query(Patient)
+    if gender:
+        q = q.filter(Patient.gender == gender.lower())
+    return {"count": q.count()}
+
+
 @app.get("/patients/{patient_id}", response_model=PatientResponse, tags=["Patients"])
 def get_patient(patient_id: str, db: Session = Depends(get_db)) -> Patient:
     """Retrieve a patient record by ID.
@@ -412,18 +424,6 @@ def delete_patient(patient_id: str, db: Session = Depends(get_db)) -> Dict[str, 
     db.commit()
     logger.info("Deleted patient %s", patient_id)
     return {"deleted": patient_id}
-
-
-@app.get("/patients/count", tags=["Patients"])
-def count_patients(
-    gender: Optional[str] = Query(None, description="Filter by gender (male/female/other)"),
-    db: Session = Depends(get_db),
-) -> Dict[str, int]:
-    """Return the total number of patient records, optionally filtered by gender."""
-    q = db.query(Patient)
-    if gender:
-        q = q.filter(Patient.gender == gender.lower())
-    return {"count": q.count()}
 
 
 @app.get("/patients", response_model=List[PatientResponse], tags=["Patients"])
@@ -483,6 +483,18 @@ def create_trial(trial: TrialCreate, db: Session = Depends(get_db)) -> Trial:
     return db_trial
 
 
+@app.get("/trials/count", tags=["Trials"])
+def count_trials(
+    phase: Optional[str] = Query(None, description="Filter by trial phase"),
+    db: Session = Depends(get_db),
+) -> Dict[str, int]:
+    """Return the total number of trial records, optionally filtered by phase."""
+    q = db.query(Trial)
+    if phase:
+        q = q.filter(Trial.phase == phase)
+    return {"count": q.count()}
+
+
 @app.get("/trials/{trial_id}", response_model=TrialResponse, tags=["Trials"])
 def get_trial(trial_id: str, db: Session = Depends(get_db)) -> Trial:
     """Retrieve a trial record by ID.
@@ -535,18 +547,6 @@ def delete_trial(trial_id: str, db: Session = Depends(get_db)) -> Dict[str, str]
     db.commit()
     logger.info("Deleted trial %s", trial_id)
     return {"deleted": trial_id}
-
-
-@app.get("/trials/count", tags=["Trials"])
-def count_trials(
-    phase: Optional[str] = Query(None, description="Filter by trial phase"),
-    db: Session = Depends(get_db),
-) -> Dict[str, int]:
-    """Return the total number of trial records, optionally filtered by phase."""
-    q = db.query(Trial)
-    if phase:
-        q = q.filter(Trial.phase == phase)
-    return {"count": q.count()}
 
 
 @app.get("/trials", response_model=List[TrialResponse], tags=["Trials"])
