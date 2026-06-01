@@ -537,6 +537,18 @@ def delete_trial(trial_id: str, db: Session = Depends(get_db)) -> Dict[str, str]
     return {"deleted": trial_id}
 
 
+@app.get("/trials/count", tags=["Trials"])
+def count_trials(
+    phase: Optional[str] = Query(None, description="Filter by trial phase"),
+    db: Session = Depends(get_db),
+) -> Dict[str, int]:
+    """Return the total number of trial records, optionally filtered by phase."""
+    q = db.query(Trial)
+    if phase:
+        q = q.filter(Trial.phase == phase)
+    return {"count": q.count()}
+
+
 @app.get("/trials", response_model=List[TrialResponse], tags=["Trials"])
 def list_trials(
     skip: int = Query(0, ge=0),
