@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 PatientDict = Dict[str, Any]
 ConditionList = List[Any]
 
+_FEATURE_COUNT: int = 14
+"""Number of features produced by build_feature_vector / ClinicalFeaturePipeline."""
+
 __all__ = [
     "compute_age",
     "build_feature_vector",
@@ -23,6 +26,7 @@ __all__ = [
     "DEFAULT_AGE",
     "CONDITION_FLAGS",
     "_strip_timezone",
+    "_FEATURE_COUNT",
 ]
 
 
