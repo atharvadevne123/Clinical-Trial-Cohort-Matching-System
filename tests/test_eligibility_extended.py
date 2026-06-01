@@ -201,3 +201,38 @@ def test_score_candidates_empty_list(matcher):
         [], {"id": "T_EMPTY", "inclusion_criteria": [], "exclusion_criteria": []}
     )
     assert results == []
+
+
+@pytest.mark.parametrize(
+    "field,patient_data,expected_not_none",
+    [
+        ("age", {"date_of_birth": "1975-01-01"}, True),
+        ("gender", {"gender": "male"}, True),
+        ("condition:I10", {"conditions": [{"code": "I10"}]}, True),
+        ("medication:C09AA01", {"medications": [{"code": "C09AA01"}]}, True),
+        ("address.city", {"address": {"city": "Boston"}}, True),
+        ("nonexistent_field", {}, False),
+    ],
+)
+def test_get_patient_field_variations(matcher, field, patient_data, expected_not_none):
+    patient = {"id": "P_FIELD", "conditions": [], "medications": [], **patient_data}
+    result = matcher._get_patient_field(patient, field)
+    if expected_not_none:
+        assert result is not None
+    else:
+        assert result is None
+
+
+def test_check_match_weak_score_has_weak_match_reason(matcher):
+    patient = {"id": "P_WEAK", "conditions": [], "medications": []}
+    trial = {
+        "id": "T_WEAK",
+        "inclusion_criteria": [
+            {"field": "condition:I10", "operator": "EXISTS", "value": None},
+            {"field": "condition:E11", "operator": "EXISTS", "value": None},
+            {"field": "condition:C50", "operator": "EXISTS", "value": None},
+        ],
+        "exclusion_criteria": [],
+    }
+    result = matcher.check_match(patient, trial)
+    assert "Weak match" in result["reasons"]
