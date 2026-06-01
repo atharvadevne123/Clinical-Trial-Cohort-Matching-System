@@ -157,7 +157,8 @@ def test_predict_probability_bounds(predictor, prob):
 
 
 def test_predict_confidence_levels(predictor):
-    for prob, expected_conf in [(0.9, "high"), (0.65, "medium"), (0.3, "low")]:
+    # HIGH: prob >= 0.75 or <= 0.25; MEDIUM: >= 0.60 or <= 0.40; LOW: otherwise
+    for prob, expected_conf in [(0.9, "HIGH"), (0.65, "MEDIUM"), (0.5, "LOW")]:
         with patch.object(predictor, "_rule_based", return_value=prob):
             predictor.model = None
             f = PatientFeatures(age=45)
