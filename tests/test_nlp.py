@@ -141,3 +141,29 @@ def test_summarize_profile_keys(nlp):
 def test_no_conditions_extracted_from_healthy_notes(nlp, note):
     entities = nlp.extract_entities(note)
     assert isinstance(entities["conditions"], list)
+
+
+def test_max_text_length_importable():
+    from src.nlp import _MAX_TEXT_LENGTH
+    assert isinstance(_MAX_TEXT_LENGTH, int)
+    assert _MAX_TEXT_LENGTH > 0
+
+
+def test_supported_entity_types_importable():
+    from src.nlp import _SUPPORTED_ENTITY_TYPES
+    assert "conditions" in _SUPPORTED_ENTITY_TYPES
+    assert "medications" in _SUPPORTED_ENTITY_TYPES
+
+
+def test_nlp_all_exports():
+    from src.nlp import __all__ as exports
+    assert "ClinicalNLPProcessor" in exports
+    assert "_MAX_TEXT_LENGTH" in exports
+
+
+@pytest.mark.parametrize("constant_name", ["_NEGATION_WINDOW_CHARS", "_SEVERITY_WINDOW_CHARS"])
+def test_nlp_window_constants_are_positive(constant_name):
+    import src.nlp as nlp_module
+    val = getattr(nlp_module, constant_name)
+    assert isinstance(val, int)
+    assert val > 0
