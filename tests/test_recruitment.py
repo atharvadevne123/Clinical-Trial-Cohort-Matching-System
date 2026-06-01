@@ -203,3 +203,22 @@ def test_send_recruitment_email_subject_contains_trial_name(engine):
     with patch("smtplib.SMTP", return_value=MockSMTP()):
         result = engine.send_recruitment_email(candidate)
     assert isinstance(result, bool)
+
+
+@pytest.mark.parametrize("max_recruits", [0, 1, 5])
+@pytest.mark.asyncio
+async def test_run_recruitment_batch_max_recruits_limit(engine, max_recruits):
+    with patch("src.recruitment.SessionLocal") as mock_session_cls:
+        mock_session = MagicMock()
+        mock_session_cls.return_value.__enter__ = MagicMock(return_value=mock_session)
+        mock_session_cls.return_value.__exit__ = MagicMock(return_value=False)
+        mock_session.query.return_value.filter.return_value.first.return_value = None
+        result = await engine.run_recruitment_batch("T_MAXR", max_recruits=max_recruits, dry_run=True)
+    assert result["candidates_scored"] <= max_recruits
+
+
+def test_engine_default_smtp_settings():
+    import src.recruitment as rec
+    engine = RecruitmentEngine()
+    assert engine.smtp_host == rec._SMTP_HOST
+    assert engine.smtp_port == rec._SMTP_PORT
