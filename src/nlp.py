@@ -246,9 +246,12 @@ class ClinicalNLPProcessor:
 
 nlp_processor = ClinicalNLPProcessor()
 
+_SUPPORTED_ENTITY_TYPES: List[str] = ["conditions", "medications", "symptoms", "severity"]
+
 __all__ = [
     "ClinicalNLPProcessor",
     "nlp_processor",
     "_NEGATION_WINDOW_CHARS",
     "_SEVERITY_WINDOW_CHARS",
+    "_SUPPORTED_ENTITY_TYPES",
 ]
