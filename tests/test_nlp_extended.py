@@ -130,3 +130,32 @@ def test_empty_text_returns_empty_entities(nlp):
 def test_entity_count_parametrized(nlp, text, expected_count):
     result = nlp.extract_entities(text)
     assert len(result["conditions"]) == expected_count
+
+
+def test_extract_entities_returns_all_keys(nlp):
+    result = nlp.extract_entities("Patient has hypertension.")
+    assert set(result.keys()) == {"conditions", "medications", "symptoms", "severity"}
+
+
+@pytest.mark.parametrize(
+    "med_text,expected_med",
+    [
+        ("Patient takes metformin.", "metformin"),
+        ("Currently on lisinopril.", "lisinopril"),
+        ("Prescribed aspirin for prevention.", "aspirin"),
+    ],
+)
+def test_medication_extraction_parametrized(nlp, med_text, expected_med):
+    result = nlp.extract_entities(med_text)
+    med_names = [m["text"] for m in result["medications"]]
+    assert expected_med in med_names
+
+
+def test_summarize_profile_disease_burden_types(nlp):
+    notes = [
+        ("Patient has hypertension.", "low"),
+        ("Patient has hypertension and type 2 diabetes.", "moderate"),
+    ]
+    for text, expected in notes:
+        profile = nlp.summarize_clinical_profile(text)
+        assert profile["disease_burden"] == expected
