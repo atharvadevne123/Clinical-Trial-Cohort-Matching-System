@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from src.eligibility import SUPPORTED_OPERATORS
 from src.main import get_db
 from src.models import Patient, PatientTrialMatch, Trial
 from src.schemas import PatientResponse, TrialResponse
@@ -84,4 +85,24 @@ def v1_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
         "patients": db.query(Patient).count(),
         "trials": db.query(Trial).count(),
         "matches": db.query(PatientTrialMatch).count(),
+    }
+
+
+@v1_router.get("/operators", summary="Supported eligibility operators (v1)")
+def v1_operators() -> Dict[str, Any]:
+    """Return the list of supported eligibility criterion operators."""
+    return {
+        "operators": SUPPORTED_OPERATORS,
+        "count": len(SUPPORTED_OPERATORS),
+        "api_version": "v1",
+    }
+
+
+@v1_router.get("/version", summary="API version info (v1)")
+def v1_version() -> Dict[str, str]:
+    """Return the API version and build metadata."""
+    return {
+        "version": "1.2.0",
+        "api_version": "v1",
+        "timestamp": datetime.datetime.utcnow().isoformat(),
     }
