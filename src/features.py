@@ -22,6 +22,8 @@ __all__ = [
     "compute_age",
     "build_feature_vector",
     "extract_condition_flags",
+    "get_condition_count",
+    "get_medication_count",
     "ClinicalFeaturePipeline",
     "DEFAULT_AGE",
     "CONDITION_FLAGS",
@@ -61,6 +63,30 @@ def extract_condition_flags(conditions: List[Any]) -> Dict[str, int]:
         flag: int(any(kw in joined for kw in keywords))
         for flag, keywords in CONDITION_FLAGS.items()
     }
+
+
+def get_condition_count(patient: Dict[str, Any]) -> int:
+    """Return the number of conditions in a patient record.
+
+    Args:
+        patient: Patient record dict.
+
+    Returns:
+        Length of the conditions list, or 0 if absent.
+    """
+    return len(patient.get("conditions") or [])
+
+
+def get_medication_count(patient: Dict[str, Any]) -> int:
+    """Return the number of medications in a patient record.
+
+    Args:
+        patient: Patient record dict.
+
+    Returns:
+        Length of the medications list, or 0 if absent.
+    """
+    return len(patient.get("medications") or [])
 
 
 def compute_age(date_of_birth: Union[datetime, str, None]) -> float:
