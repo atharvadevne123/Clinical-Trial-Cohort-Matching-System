@@ -248,10 +248,14 @@ nlp_processor = ClinicalNLPProcessor()
 
 _SUPPORTED_ENTITY_TYPES: List[str] = ["conditions", "medications", "symptoms", "severity"]
 
+_MAX_TEXT_LENGTH: int = 50_000
+"""Maximum input text length (characters) accepted by the NLP processor."""
+
 __all__ = [
     "ClinicalNLPProcessor",
     "nlp_processor",
     "_NEGATION_WINDOW_CHARS",
     "_SEVERITY_WINDOW_CHARS",
     "_SUPPORTED_ENTITY_TYPES",
+    "_MAX_TEXT_LENGTH",
 ]
