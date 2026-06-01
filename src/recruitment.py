@@ -35,6 +35,8 @@ _SMTP_HOST: str = os.environ.get("SMTP_HOST", "localhost")
 _SMTP_PORT: int = int(os.environ.get("SMTP_PORT", "1025"))
 _SMTP_FROM: str = os.environ.get("SMTP_FROM", "noreply@trial.local")
 _SMTP_TIMEOUT: int = int(os.environ.get("SMTP_TIMEOUT", "5"))
+_DEFAULT_SCORE_THRESHOLD: float = float(os.environ.get("SCORE_THRESHOLD", "0.5"))
+_DEFAULT_BATCH_SIZE: int = int(os.environ.get("MAX_RECRUITS", "50"))
 
 
 def _patient_to_dict(p: Patient) -> Dict[str, Any]:
