@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-06-01
+
+### Added
+- `GET /patients/count` endpoint returning patient count with optional gender filter.
+- `GET /trials/count` endpoint returning trial count with optional phase filter.
+- `GET /api/v1/operators` versioned endpoint listing all supported eligibility operators.
+- `GET /api/v1/version` versioned endpoint returning API version metadata.
+- `operator_names` property on `EligibilityMatcher` returning sorted operator list.
+- `__repr__` method on `EligibilityMatcher` for readable string representation.
+- `batch_record()`, `__len__()`, and `__repr__()` on `PredictionMonitor`.
+- `is_fitted`, `feature_names`, and `reset()` on `ClinicalFeaturePipeline`.
+- `_DEFAULT_SCORE_THRESHOLD` and `_DEFAULT_BATCH_SIZE` constants in `recruitment.py`.
+- `tests/test_retrain_pipeline.py` with 9 pipeline tests (synthetic data, skip, success).
+- `tests/test_api_v1_extended.py` with 11 v1 router endpoint tests.
+- Type annotations added to `tests/conftest.py` fixtures.
+- `format`, `check`, and `coverage-html` Makefile targets.
+- Branch coverage and HTML report configured in `pyproject.toml`.
+
+### Fixed
+- Version mismatch: `GET /` root endpoint now returns `1.2.0` (was `1.1.0`).
+
 ## [1.2.1] - 2026-05-22
 
 ### Added
