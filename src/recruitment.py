@@ -166,6 +166,18 @@ class RecruitmentEngine:
             )
             return False
 
+    @staticmethod
+    def validate_probability(score: float) -> bool:
+        """Return True if score is a valid probability in [0.0, 1.0].
+
+        Args:
+            score: A float value to validate as a probability.
+
+        Returns:
+            True if 0.0 <= score <= 1.0.
+        """
+        return isinstance(score, (int, float)) and 0.0 <= float(score) <= 1.0
+
     async def run_recruitment_batch(
         self,
         trial_id: str,
