@@ -5,7 +5,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from src.schemas import PatientCreate, TrialCreate
+from src.schemas import ClinicalNoteRequest, PatientCreate, PatientUpdate, TrialCreate, TrialUpdate
 
 
 def test_patient_create_valid():
@@ -77,3 +77,47 @@ def test_trial_optional_dates_default_to_none():
     )
     assert t.start_date is None
     assert t.completion_date is None
+
+
+def test_patient_id_min_length_validation():
+    with pytest.raises(ValidationError):
+        PatientCreate(
+            id="",
+            first_name="Alice",
+            last_name="Smith",
+            date_of_birth=datetime(1980, 1, 1),
+            gender="female",
+        )
+
+
+def test_patient_update_partial():
+    u = PatientUpdate(email="new@example.com")
+    assert u.email == "new@example.com"
+    assert u.phone is None
+
+
+def test_trial_update_partial():
+    u = TrialUpdate(name="Updated Name")
+    assert u.name == "Updated Name"
+
+
+def test_clinical_note_request_valid():
+    req = ClinicalNoteRequest(text="Patient has hypertension.")
+    assert req.text == "Patient has hypertension."
+
+
+def test_clinical_note_request_empty_fails():
+    with pytest.raises(ValidationError):
+        ClinicalNoteRequest(text="")
+
+
+@pytest.mark.parametrize("enrollment", [1, 50, 100, 1000])
+def test_trial_create_various_enrollment_sizes(enrollment):
+    t = TrialCreate(
+        id=f"T_{enrollment}",
+        name="Study",
+        phase="Phase 3",
+        primary_condition="Hypertension",
+        target_enrollment=enrollment,
+    )
+    assert t.target_enrollment == enrollment
