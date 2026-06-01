@@ -172,7 +172,7 @@ def test_patient_features_defaults():
     assert f.bmi == 25.0
 
 
-def test_prediction_result_has_required_fields(predictor, sample_features):
+def test_prediction_result_all_fields_present(predictor, sample_features):
     result = predictor.predict(sample_features, "TEST_P", "TEST_T")
     assert hasattr(result, "enrollment_probability")
     assert hasattr(result, "confidence")
