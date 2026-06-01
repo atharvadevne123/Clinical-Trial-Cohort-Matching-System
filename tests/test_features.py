@@ -260,3 +260,34 @@ def test_pipeline_feature_names_contains_age():
     pipeline = ClinicalFeaturePipeline()
     assert "age" in pipeline.feature_names
     assert "bmi" in pipeline.feature_names
+
+
+def test_feature_count_constant_importable():
+    from src.features import _FEATURE_COUNT
+    assert isinstance(_FEATURE_COUNT, int)
+    assert _FEATURE_COUNT > 0
+
+
+def test_feature_count_matches_feature_names():
+    from src.features import _FEATURE_COUNT
+    pipeline = ClinicalFeaturePipeline()
+    assert len(pipeline.feature_names) == _FEATURE_COUNT
+
+
+def test_features_all_exports_includes_feature_count():
+    from src.features import __all__ as exports
+    assert "ClinicalFeaturePipeline" in exports
+    assert "_FEATURE_COUNT" in exports
+    assert "DEFAULT_AGE" in exports
+
+
+def test_default_age_is_positive():
+    from src.features import DEFAULT_AGE
+    assert DEFAULT_AGE > 0
+
+
+def test_condition_flags_importable():
+    from src.features import CONDITION_FLAGS
+    assert isinstance(CONDITION_FLAGS, dict)
+    assert "has_diabetes" in CONDITION_FLAGS
+    assert "has_hypertension" in CONDITION_FLAGS
