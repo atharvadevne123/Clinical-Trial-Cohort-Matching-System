@@ -286,3 +286,5 @@ class FHIRClient:
 
 
 fhir_client = FHIRClient()
+
+__all__ = ["FHIRClient", "fhir_client"]
