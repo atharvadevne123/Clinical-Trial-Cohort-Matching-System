@@ -163,3 +163,26 @@ def test_summary_min_max(data, expected_min, expected_max):
 def test_check_drift_message_on_insufficient_data(monitor):
     result = monitor.check_drift()
     assert "message" in result or result["drift_detected"] is False
+
+
+def test_batch_record_adds_multiple_predictions(monitor):
+    monitor.batch_record([0.1, 0.5, 0.9])
+    assert len(monitor) == 3
+
+
+def test_len_returns_prediction_count(monitor):
+    assert len(monitor) == 0
+    monitor.record(0.5)
+    assert len(monitor) == 1
+
+
+def test_repr_contains_window_size(monitor):
+    r = repr(monitor)
+    assert "500" in r
+    assert "PredictionMonitor" in r
+
+
+def test_batch_record_respects_window_size():
+    m = PredictionMonitor(window_size=5)
+    m.batch_record([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7])
+    assert len(m) == 5
