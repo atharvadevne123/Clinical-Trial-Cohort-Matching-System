@@ -58,3 +58,25 @@ def test_migrations_have_required_keys():
         assert "description" in m
         assert "up" in m
         assert "down" in m
+
+
+def test_migrations_list_is_non_empty():
+    assert len(MIGRATIONS) > 0
+
+
+@pytest.mark.parametrize("index", range(len(MIGRATIONS)))
+def test_migration_versions_are_strings(index):
+    assert isinstance(MIGRATIONS[index]["version"], str)
+
+
+def test_migration_versions_are_unique():
+    versions = [m["version"] for m in MIGRATIONS]
+    assert len(versions) == len(set(versions))
+
+
+def test_apply_migrations_versions_are_sorted(test_engine):
+    apply_migrations(test_engine)
+    with test_engine.connect() as conn:
+        rows = conn.execute(text("SELECT version FROM migration_log ORDER BY version")).fetchall()
+    versions = [r[0] for r in rows]
+    assert versions == sorted(versions)
