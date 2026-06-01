@@ -294,6 +294,18 @@ A patient is `ELIGIBLE` only when **all** inclusion criteria are met and **no** 
 | `SMTP_TIMEOUT` | `5` | SMTP connection timeout in seconds |
 | `DRIFT_THRESHOLD` | `0.05` | KS-test p-value threshold for drift alerts |
 | `LOG_LEVEL` | `INFO` | Python logging level |
+| `SCORE_THRESHOLD` | `0.5` | Minimum enrollment probability for recruitment candidates |
+| `MAX_RECRUITS` | `50` | Maximum candidates processed per recruitment batch |
+
+---
+
+## Recent Changes (v1.2.2)
+
+- **New endpoints**: `GET /patients/count`, `GET /trials/count`, `GET /api/v1/operators`, `GET /api/v1/version`
+- **New helpers**: `EligibilityMatcher.count_eligible()`, `PredictionMonitor.percentile()`, `PredictionMonitor.clear_reference()`, `RecruitmentEngine.validate_probability()`
+- **New utilities**: `get_condition_count()`, `get_medication_count()` in `features.py`; `_FEATURE_COUNT` and `_MAX_TEXT_LENGTH` constants
+- **Bug fix**: Root `GET /` now returns correct version `1.2.0`; FHIR `parse_patient` handles empty name lists
+- **Test coverage**: 869 tests passing across 45 test files
 
 ---
 
