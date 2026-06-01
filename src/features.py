@@ -127,6 +127,25 @@ class ClinicalFeaturePipeline:
     def __init__(self) -> None:
         self.scaler: Optional[Any] = None
 
+    @property
+    def is_fitted(self) -> bool:
+        """Return True if the scaler has been fitted."""
+        return self.scaler is not None
+
+    @property
+    def feature_names(self) -> List[str]:
+        """Return the ordered list of feature names for the 14-dim vector."""
+        return [
+            "age", "gender_male", "num_conditions", "num_medications",
+            "has_diabetes", "has_hypertension", "has_heart_disease", "has_cancer",
+            "has_afib", "smoker", "bmi", "prior_trial_participation",
+            "distance_to_site_km", "num_exclusion_flags",
+        ]
+
+    def reset(self) -> None:
+        """Clear the fitted scaler so the pipeline can be re-fitted."""
+        self.scaler = None
+
     def fit_transform(self, patients: List[Dict[str, Any]]) -> np.ndarray:
         """Build feature matrix and fit a StandardScaler.
 
