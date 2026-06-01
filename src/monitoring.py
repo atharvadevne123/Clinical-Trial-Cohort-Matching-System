@@ -122,6 +122,22 @@ class PredictionMonitor:
             "max": round(float(arr.max()), 4),
         }
 
+    def batch_record(self, probabilities: List[float]) -> None:
+        """Record multiple prediction probabilities at once.
+
+        Args:
+            probabilities: List of enrollment probabilities (0.0–1.0).
+        """
+        for p in probabilities:
+            self.predictions.append(float(p))
+
+    def __len__(self) -> int:
+        """Return the number of predictions currently in the rolling window."""
+        return len(self.predictions)
+
+    def __repr__(self) -> str:
+        return f"PredictionMonitor(window_size={self.window_size}, recorded={len(self)})"
+
     def reset(self) -> None:
         """Clear the rolling window of recorded predictions."""
         self.predictions.clear()
