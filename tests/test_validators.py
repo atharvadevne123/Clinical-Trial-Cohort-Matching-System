@@ -7,9 +7,11 @@ import pytest
 from src.validators import (
     is_valid_atc,
     is_valid_icd10,
+    validate_criteria_list,
     validate_date_range,
     validate_enrollment_probability,
     validate_patient_conditions,
+    validate_patient_medications,
 )
 
 
@@ -175,3 +177,50 @@ def test_is_valid_icd10_invalid_formats(invalid_icd10):
 @pytest.mark.parametrize("valid_atc", ["C09AA01", "A10BA02", "B01AA03"])
 def test_is_valid_atc_valid_codes(valid_atc):
     assert is_valid_atc(valid_atc) is True
+
+
+def test_validate_patient_medications_valid():
+    meds = [{"code": "C09AA01"}, {"code": "A10BA02"}]
+    warnings = validate_patient_medications(meds)
+    assert warnings == []
+
+
+def test_validate_patient_medications_invalid():
+    meds = [{"code": "NOTVALID"}]
+    warnings = validate_patient_medications(meds)
+    assert len(warnings) == 1
+
+
+def test_validate_patient_medications_empty():
+    assert validate_patient_medications([]) == []
+
+
+def test_validate_patient_medications_string_codes():
+    warnings = validate_patient_medications(["C09AA01", "INVALID"])
+    assert len(warnings) == 1
+
+
+@pytest.mark.parametrize(
+    "criteria,expected_warning_count",
+    [
+        ([{"field": "age", "operator": "GT", "value": 18}], 0),
+        ([{"operator": "GT", "value": 18}], 1),
+        ([{"field": "age", "operator": "BADOP", "value": 18}], 1),
+        (["not_a_dict"], 1),
+        ([], 0),
+    ],
+)
+def test_validate_criteria_list(criteria, expected_warning_count):
+    warnings = validate_criteria_list(criteria)
+    assert len(warnings) == expected_warning_count
+
+
+def test_validate_date_range_equal_dates():
+    dt = datetime(2024, 6, 1)
+    valid, msg = validate_date_range(dt, dt)
+    assert valid is True
+
+
+def test_validate_date_range_none_end():
+    valid, msg = validate_date_range(datetime(2024, 1, 1), None)
+    assert valid is True
