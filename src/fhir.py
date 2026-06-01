@@ -139,7 +139,8 @@ class FHIRClient:
             Normalised patient dict with keys: fhir_id, first_name, last_name,
             date_of_birth, gender, email, phone, postal_code.
         """
-        name = fhir_patient.get("name", [{}])[0]
+        name_list = fhir_patient.get("name") or [{}]
+        name = name_list[0] if name_list else {}
         address = fhir_patient.get("address", [{}])[0] if fhir_patient.get("address") else {}
         telecom = self._parse_telecom(fhir_patient.get("telecom", []))
         return {
