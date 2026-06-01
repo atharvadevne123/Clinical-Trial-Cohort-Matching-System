@@ -175,3 +175,57 @@ def test_default_age_constant():
 def test_extract_condition_flags_extended(condition_list, expected_flag, expected_value):
     flags = extract_condition_flags(condition_list)
     assert flags[expected_flag] == expected_value
+
+
+def test_build_feature_vector_all_flags_set():
+    patient = {
+        "date_of_birth": "1970-01-01",
+        "gender": "male",
+        "conditions": [
+            {"code": "E11", "name": "diabetes"},
+            {"code": "I10", "name": "hypertension"},
+            {"code": "I50", "name": "heart failure"},
+            {"code": "C50", "name": "cancer"},
+            {"code": "I48", "name": "atrial fibrillation"},
+        ],
+        "medications": [],
+        "smoker": True,
+        "prior_trial_participation": True,
+    }
+    v = build_feature_vector(patient)
+    assert v[4] == 1  # has_diabetes
+    assert v[5] == 1  # has_hypertension
+    assert v[6] == 1  # has_heart_disease
+    assert v[7] == 1  # has_cancer
+    assert v[8] == 1  # has_afib
+    assert v[9] == 1  # smoker
+
+
+def test_pipeline_transform_after_fit():
+    patients = [
+        {"date_of_birth": "1970-01-01", "gender": "male", "conditions": [], "medications": []},
+        {"date_of_birth": "1985-01-01", "gender": "female", "conditions": [], "medications": []},
+    ]
+    pipeline = ClinicalFeaturePipeline()
+    pipeline.fit_transform(patients)
+    new_patients = [{"date_of_birth": "1975-01-01", "gender": "male", "conditions": [], "medications": []}]
+    X_new = pipeline.transform(new_patients)
+    assert X_new.shape == (1, 14)
+
+
+@pytest.mark.parametrize(
+    "dob_str",
+    ["not-a-date", "2099-99-99", "", "abc", "0000-00-00"],
+)
+def test_compute_age_invalid_returns_default(dob_str):
+    age = compute_age(dob_str)
+    assert age == 50.0
+
+
+def test_build_feature_vector_medication_count():
+    patient = {
+        "conditions": [],
+        "medications": [{"code": "A"}, {"code": "B"}, {"code": "C"}],
+    }
+    v = build_feature_vector(patient)
+    assert v[3] == 3  # num_medications
