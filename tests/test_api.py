@@ -160,3 +160,50 @@ def test_ml_model_info():
 def test_meta_endpoints_return_200(endpoint):
     response = client.get(endpoint)
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize("endpoint", ["/healthz", "/ping", "/version", "/operators", "/metrics"])
+def test_extended_meta_endpoints_return_200(endpoint):
+    response = client.get(endpoint)
+    assert response.status_code == 200
+
+
+def test_version_endpoint_returns_version_key():
+    response = client.get("/version")
+    data = response.json()
+    assert "version" in data
+    assert "api" in data
+
+
+def test_operators_endpoint_returns_list():
+    response = client.get("/operators")
+    data = response.json()
+    assert "operators" in data
+    assert isinstance(data["operators"], list)
+    assert len(data["operators"]) > 0
+
+
+def test_metrics_endpoint_returns_counts():
+    response = client.get("/metrics")
+    data = response.json()
+    assert "patients" in data
+    assert "trials" in data
+    assert "uptime_seconds" in data
+
+
+def test_summary_endpoint_returns_200():
+    response = client.get("/summary")
+    assert response.status_code == 200
+
+
+def test_readyz_endpoint():
+    response = client.get("/readyz")
+    assert response.status_code in (200, 503)
+    data = response.json()
+    assert "status" in data
+
+
+def test_list_patients_with_limit():
+    response = client.get("/patients?limit=5&offset=0")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
