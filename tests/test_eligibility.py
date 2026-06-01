@@ -147,3 +147,68 @@ def test_reasons_list_populated(matcher, basic_patient, basic_trial):
     result = matcher.check_match(basic_patient, basic_trial)
     assert isinstance(result["reasons"], list)
     assert len(result["reasons"]) > 0
+
+
+@pytest.mark.parametrize(
+    "operator,field,value,patient_extra,expected_eligible",
+    [
+        ("EQ", "gender", "male", {"gender": "male"}, True),
+        ("EQ", "gender", "female", {"gender": "male"}, False),
+        ("IN", "gender", "male,female,other", {"gender": "female"}, True),
+        ("NOT_IN", "gender", "unknown,other", {"gender": "female"}, True),
+        ("NOT_IN", "gender", "male,female", {"gender": "female"}, False),
+        ("CONTAINS", "first_name", "ali", {"first_name": "Alice"}, True),
+        ("CONTAINS", "first_name", "bob", {"first_name": "Alice"}, False),
+    ],
+)
+def test_parametrized_field_operators(matcher, operator, field, value, patient_extra, expected_eligible):
+    patient = {"id": "P_PARAM2", "conditions": [], "medications": [], **patient_extra}
+    trial = {
+        "id": "T_PARAM2",
+        "inclusion_criteria": [{"field": field, "operator": operator, "value": value}],
+        "exclusion_criteria": [],
+    }
+    result = matcher.check_match(patient, trial)
+    assert result["eligible"] == expected_eligible
+
+
+def test_score_candidates_returns_sorted_list(matcher):
+    patients = [
+        {"id": "P_SC1", "date_of_birth": "1990-01-01", "conditions": [], "medications": []},
+        {"id": "P_SC2", "date_of_birth": "1960-01-01", "conditions": [{"code": "I10"}], "medications": []},
+    ]
+    trial = {
+        "id": "T_SC",
+        "inclusion_criteria": [{"field": "condition:I10", "operator": "EXISTS", "value": None}],
+        "exclusion_criteria": [],
+    }
+    results = matcher.score_candidates(patients, trial)
+    assert len(results) == 2
+    assert results[0]["match_score"] >= results[1]["match_score"]
+    assert all("patient_id" in r for r in results)
+
+
+def test_nested_field_access(matcher):
+    patient = {"id": "P_NEST", "address": {"city": "Boston"}, "conditions": [], "medications": []}
+    trial = {
+        "id": "T_NEST",
+        "inclusion_criteria": [{"field": "address.city", "operator": "EQ", "value": "Boston"}],
+        "exclusion_criteria": [],
+    }
+    result = matcher.check_match(patient, trial)
+    assert result["eligible"] is True
+
+
+def test_medication_field_access(matcher):
+    patient = {
+        "id": "P_MED",
+        "conditions": [],
+        "medications": [{"code": "C09AA01", "name": "Lisinopril"}],
+    }
+    trial = {
+        "id": "T_MED",
+        "inclusion_criteria": [{"field": "medication:C09AA01", "operator": "EXISTS", "value": None}],
+        "exclusion_criteria": [],
+    }
+    result = matcher.check_match(patient, trial)
+    assert result["eligible"] is True
