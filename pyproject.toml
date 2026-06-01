@@ -31,10 +31,20 @@ filterwarnings = [
 ]
 
 [tool.coverage.run]
-source = ["src"]
-omit = ["src/seed_data.py", "tests/*"]
+source = ["src", "pipelines", "scripts"]
+omit = ["src/seed_data.py", "tests/*", "*/conftest.py"]
+branch = true
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
-fail_under = 60
+fail_under = 65
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
