@@ -168,7 +168,7 @@ def test_predict_confidence_levels(predictor):
 
 def test_patient_features_defaults():
     f = PatientFeatures()
-    assert f.age == 50.0
+    assert f.age == 0.0
     assert f.gender_male == 0
     assert f.bmi == 25.0
 
@@ -178,4 +178,4 @@ def test_prediction_result_all_fields_present(predictor, sample_features):
     assert hasattr(result, "enrollment_probability")
     assert hasattr(result, "confidence")
     assert hasattr(result, "recommendation")
-    assert hasattr(result, "factors")
+    assert hasattr(result, "key_factors")

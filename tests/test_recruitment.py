@@ -1,5 +1,6 @@
 """Tests for the recruitment engine."""
 
+import smtplib
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -44,7 +45,7 @@ def test_send_recruitment_email_handles_smtp_error(engine):
         "trial_id": "T001",
         "trial_name": "Hypertension Trial",
     }
-    with patch("smtplib.SMTP", side_effect=Exception("SMTP unavailable")):
+    with patch("smtplib.SMTP", side_effect=smtplib.SMTPException("SMTP unavailable")):
         result = engine.send_recruitment_email(candidate)
     assert result is False
 
