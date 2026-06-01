@@ -188,12 +188,12 @@ def test_trials_count_returns_integer():
     assert isinstance(response.json()["count"], int)
 
 
-def test_list_patients_invalid_limit():
+def test_list_patients_zero_limit_invalid():
     response = client.get("/patients?limit=0")
     assert response.status_code == 422
 
 
-def test_list_trials_invalid_limit():
+def test_list_trials_negative_limit_invalid():
     response = client.get("/trials?limit=-1")
     assert response.status_code == 422
 
