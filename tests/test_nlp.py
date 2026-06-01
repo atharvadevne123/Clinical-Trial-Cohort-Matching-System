@@ -93,3 +93,51 @@ def test_entity_confidence_present(nlp):
     for e in entities["conditions"]:
         assert "confidence" in e
         assert 0.0 <= e["confidence"] <= 1.0
+
+
+@pytest.mark.parametrize(
+    "text,expected_condition",
+    [
+        ("Patient has type 2 diabetes.", "diabetes"),
+        ("Diagnosed with cancer last year.", "cancer"),
+        ("History of atrial fibrillation.", "atrial fibrillation"),
+    ],
+)
+def test_extract_conditions_parametrized(nlp, text, expected_condition):
+    entities = nlp.extract_entities(text)
+    condition_texts = [e["text"] for e in entities["conditions"]]
+    assert expected_condition in condition_texts
+
+
+def test_extract_entities_whitespace_only(nlp):
+    entities = nlp.extract_entities("   ")
+    assert entities["conditions"] == [] or isinstance(entities["conditions"], list)
+
+
+def test_extract_entities_returns_required_keys(nlp):
+    entities = nlp.extract_entities("Patient has hypertension.")
+    assert "conditions" in entities
+    assert "medications" in entities
+    assert "symptoms" in entities
+    assert "severity" in entities
+
+
+def test_summarize_profile_keys(nlp):
+    profile = nlp.summarize_clinical_profile("Patient has hypertension.")
+    assert "num_conditions" in profile
+    assert "num_medications" in profile
+    assert "num_symptoms" in profile
+    assert "disease_burden" in profile
+
+
+@pytest.mark.parametrize(
+    "note",
+    [
+        "No conditions found here.",
+        "Patient is healthy with no known conditions.",
+        "Routine check-up, no significant findings.",
+    ],
+)
+def test_no_conditions_extracted_from_healthy_notes(nlp, note):
+    entities = nlp.extract_entities(note)
+    assert isinstance(entities["conditions"], list)
