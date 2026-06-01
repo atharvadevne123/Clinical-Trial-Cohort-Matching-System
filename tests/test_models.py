@@ -194,3 +194,53 @@ def test_patient_gender_values_persist(db, gender):
     db.commit()
     fetched = db.query(Patient).filter(Patient.id == pid).first()
     assert fetched.gender == gender
+
+
+def test_patient_conditions_stored_as_json(db):
+    conditions = [{"code": "I10", "name": "Hypertension"}, {"code": "E11", "name": "Diabetes"}]
+    p = Patient(
+        id="MOD_P_COND",
+        first_name="A",
+        last_name="B",
+        gender="male",
+        conditions=conditions,
+        medications=[],
+        allergies=[],
+    )
+    db.add(p)
+    db.commit()
+    fetched = db.query(Patient).filter(Patient.id == "MOD_P_COND").first()
+    assert len(fetched.conditions) == 2
+    assert fetched.conditions[0]["code"] == "I10"
+
+
+@pytest.mark.parametrize("phase", ["Phase 1", "Phase 2", "Phase 3", "Phase 4"])
+def test_trial_phases_persist(db, phase):
+    tid = f"MOD_PHASE_{phase.replace(' ', '_')}"
+    t = Trial(
+        id=tid,
+        name=f"{phase} Study",
+        phase=phase,
+        primary_condition="Hypertension",
+        target_enrollment=50,
+    )
+    db.add(t)
+    db.commit()
+    fetched = db.query(Trial).filter(Trial.id == tid).first()
+    assert fetched.phase == phase
+
+
+def test_match_combined_score_stored(db):
+    from src.models import PatientTrialMatch
+    m = PatientTrialMatch(
+        patient_id="MOD_P_SCORE",
+        trial_id="MOD_T_SCORE",
+        rule_match_score=80.0,
+        ml_match_score=70.0,
+        enrollment_probability=0.75,
+        combined_score=75.0,
+    )
+    db.add(m)
+    db.commit()
+    fetched = db.query(PatientTrialMatch).filter(PatientTrialMatch.patient_id == "MOD_P_SCORE").first()
+    assert fetched.combined_score == 75.0
