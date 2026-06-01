@@ -86,3 +86,21 @@ def test_v1_trials_pagination():
 def test_v1_patients_limit_validation():
     response = client.get("/api/v1/patients?limit=0")
     assert response.status_code == 422
+
+
+def test_v1_operators_endpoint():
+    response = client.get("/api/v1/operators")
+    assert response.status_code == 200
+    data = response.json()
+    assert "operators" in data
+    assert data.get("api_version") == "v1"
+    assert isinstance(data["operators"], list)
+    assert len(data["operators"]) > 0
+
+
+def test_v1_version_endpoint():
+    response = client.get("/api/v1/version")
+    assert response.status_code == 200
+    data = response.json()
+    assert "version" in data
+    assert data.get("api_version") == "v1"
