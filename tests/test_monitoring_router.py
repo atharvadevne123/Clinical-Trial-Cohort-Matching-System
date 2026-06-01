@@ -77,3 +77,31 @@ def test_monitoring_summary_min_max_none_when_empty():
         assert data["mean"] is None
         assert data["min"] is None
         assert data["max"] is None
+
+
+def test_set_reference_valid_payload():
+    payload = {"probabilities": [0.3, 0.5, 0.7, 0.4, 0.6]}
+    response = client.post("/monitoring/set-reference", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["reference_samples"] == 5
+
+
+def test_set_reference_invalid_payload():
+    payload = {"probabilities": "not-a-list"}
+    response = client.post("/monitoring/set-reference", json=payload)
+    assert response.status_code == 400
+
+
+def test_set_reference_empty_list():
+    payload = {"probabilities": []}
+    response = client.post("/monitoring/set-reference", json=payload)
+    assert response.status_code == 200
+    assert response.json()["reference_samples"] == 0
+
+
+def test_monitoring_reset_message():
+    response = client.post("/monitoring/reset")
+    data = response.json()
+    assert "message" in data
