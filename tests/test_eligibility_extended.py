@@ -236,3 +236,77 @@ def test_check_match_weak_score_has_weak_match_reason(matcher):
     }
     result = matcher.check_match(patient, trial)
     assert "Weak match" in result["reasons"]
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        (5, "3,8", True),
+        (2, "3,8", False),
+        (9, "3,8", False),
+        (3, "3,8", True),
+        (8, "3,8", True),
+        (None, "3,8", False),
+    ],
+)
+def test_between_operator_parametrized(matcher, a, b, expected):
+    assert matcher._between(a, b) == expected
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        ("hypertension notes", "hypertension", True),
+        ("Hypertension", "hypertension", True),
+        ("diabetes", "hypertension", False),
+        (None, "hypertension", False),
+        ("notes", None, False),
+    ],
+)
+def test_contains_operator_parametrized(matcher, a, b, expected):
+    assert matcher._contains(a, b) == expected
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        ("male", "male,female", False),
+        ("other", "male,female", True),
+        (["other"], "male,female", True),
+        (["male"], "male,female", False),
+    ],
+)
+def test_not_in_operator_parametrized(matcher, a, b, expected):
+    assert matcher._not_in(a, b) == expected
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        (5, 5, True),
+        (4, 5, False),
+        (None, 5, False),
+    ],
+)
+def test_lte_operator_parametrized(matcher, a, b, expected):
+    assert matcher._lte(a, b) == expected
+
+
+def test_supported_operators_importable():
+    from src.eligibility import SUPPORTED_OPERATORS
+    assert isinstance(SUPPORTED_OPERATORS, list)
+    assert len(SUPPORTED_OPERATORS) > 0
+    assert "EXISTS" in SUPPORTED_OPERATORS
+    assert "NOT_EXISTS" in SUPPORTED_OPERATORS
+
+
+def test_eq_operator(matcher):
+    assert matcher._eq("male", "male") is True
+    assert matcher._eq("male", "female") is False
+    assert matcher._eq(None, None) is True
+
+
+def test_gte_operator(matcher):
+    assert matcher._gte(5, 5) is True
+    assert matcher._gte(6, 5) is True
+    assert matcher._gte(4, 5) is False
