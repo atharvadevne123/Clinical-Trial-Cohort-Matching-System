@@ -16,8 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET /api/v1/version` versioned endpoint returning API version metadata.
 - `operator_names` property on `EligibilityMatcher` returning sorted operator list.
 - `__repr__` method on `EligibilityMatcher` for readable string representation.
-- `batch_record()`, `__len__()`, and `__repr__()` on `PredictionMonitor`.
+- `count_eligible()` helper on `EligibilityMatcher` counting eligible patients for a trial.
+- `batch_record()`, `__len__()`, `__repr__()`, `percentile()`, and `clear_reference()` on `PredictionMonitor`.
 - `is_fitted`, `feature_names`, and `reset()` on `ClinicalFeaturePipeline`.
+- `get_condition_count()` and `get_medication_count()` utility functions in `features.py`.
+- `_FEATURE_COUNT` constant in `features.py` documenting the feature vector size.
+- `_MAX_TEXT_LENGTH` constant in `nlp.py` limiting input text size.
+- `validate_probability()` static method on `RecruitmentEngine`.
 - `_DEFAULT_SCORE_THRESHOLD` and `_DEFAULT_BATCH_SIZE` constants in `recruitment.py`.
 - `tests/test_retrain_pipeline.py` with 9 pipeline tests (synthetic data, skip, success).
 - `tests/test_api_v1_extended.py` with 11 v1 router endpoint tests.
