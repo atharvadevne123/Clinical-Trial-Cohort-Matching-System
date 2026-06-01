@@ -186,3 +186,34 @@ def test_batch_record_respects_window_size():
     m = PredictionMonitor(window_size=5)
     m.batch_record([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7])
     assert len(m) == 5
+
+
+def test_percentile_returns_correct_value(monitor):
+    monitor.batch_record([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+    p50 = monitor.percentile(50)
+    assert p50 is not None
+    assert 0.45 < p50 < 0.65
+
+
+def test_percentile_returns_none_when_empty(monitor):
+    assert monitor.percentile(50) is None
+
+
+@pytest.mark.parametrize("q,expected_range", [(0, (0.09, 0.11)), (100, (0.99, 1.01))])
+def test_percentile_edge_values(monitor, q, expected_range):
+    monitor.batch_record([0.1, 0.5, 1.0])
+    result = monitor.percentile(q)
+    assert result is not None
+    assert expected_range[0] <= result <= expected_range[1]
+
+
+def test_clear_reference_removes_reference(monitor):
+    monitor.set_reference([0.5, 0.6, 0.7])
+    assert monitor.reference is not None
+    monitor.clear_reference()
+    assert monitor.reference is None
+
+
+def test_clear_reference_on_empty_monitor_is_safe(monitor):
+    monitor.clear_reference()
+    assert monitor.reference is None
