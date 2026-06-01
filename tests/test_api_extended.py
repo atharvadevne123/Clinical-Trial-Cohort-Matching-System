@@ -168,3 +168,37 @@ def test_root_endpoint():
 def test_meta_endpoints_return_200(path):
     response = client.get(path)
     assert response.status_code == 200
+
+
+def test_root_version_is_correct():
+    response = client.get("/")
+    data = response.json()
+    assert data["version"] == "1.2.0"
+
+
+def test_patients_count_returns_integer():
+    response = client.get("/patients/count")
+    assert response.status_code == 200
+    assert isinstance(response.json()["count"], int)
+
+
+def test_trials_count_returns_integer():
+    response = client.get("/trials/count")
+    assert response.status_code == 200
+    assert isinstance(response.json()["count"], int)
+
+
+def test_list_patients_invalid_limit():
+    response = client.get("/patients?limit=0")
+    assert response.status_code == 422
+
+
+def test_list_trials_invalid_limit():
+    response = client.get("/trials?limit=-1")
+    assert response.status_code == 422
+
+
+def test_ping_returns_pong():
+    response = client.get("/ping")
+    assert response.status_code == 200
+    assert response.json()["ping"] == "pong"
