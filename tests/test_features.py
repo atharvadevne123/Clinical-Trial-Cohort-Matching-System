@@ -291,3 +291,37 @@ def test_condition_flags_importable():
     assert isinstance(CONDITION_FLAGS, dict)
     assert "has_diabetes" in CONDITION_FLAGS
     assert "has_hypertension" in CONDITION_FLAGS
+
+
+def test_get_condition_count_basic():
+    from src.features import get_condition_count
+    patient = {"conditions": [{"code": "I10"}, {"code": "E11"}]}
+    assert get_condition_count(patient) == 2
+
+
+def test_get_condition_count_empty():
+    from src.features import get_condition_count
+    assert get_condition_count({"conditions": []}) == 0
+    assert get_condition_count({}) == 0
+
+
+def test_get_medication_count_basic():
+    from src.features import get_medication_count
+    patient = {"medications": [{"code": "B01AA03"}]}
+    assert get_medication_count(patient) == 1
+
+
+def test_get_medication_count_empty():
+    from src.features import get_medication_count
+    assert get_medication_count({"medications": []}) == 0
+    assert get_medication_count({}) == 0
+
+
+@pytest.mark.parametrize(
+    "n_conds",
+    [0, 1, 3, 10],
+)
+def test_get_condition_count_parametrized(n_conds):
+    from src.features import get_condition_count
+    patient = {"conditions": [{"code": f"C{i:02d}"} for i in range(n_conds)]}
+    assert get_condition_count(patient) == n_conds
