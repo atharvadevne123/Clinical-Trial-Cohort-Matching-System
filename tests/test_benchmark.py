@@ -40,3 +40,27 @@ def test_benchmark_ml_predictor_returns_expected_keys():
 def test_eligibility_benchmark_pair_count(n_patients, n_trials):
     result = benchmark_eligibility_matcher(n_patients, n_trials)
     assert result["total_pairs"] == n_patients * n_trials
+
+
+def test_time_function_with_kwargs():
+    def add(a, b=0):
+        return a + b
+
+    result, elapsed = time_function(add, 3, b=7)
+    assert result == 10
+    assert elapsed >= 0.0
+
+
+def test_benchmark_ml_predictor_throughput():
+    result = benchmark_ml_predictor(n_patients=5)
+    assert result["predictions_per_second"] > 0
+
+
+def test_benchmark_eligibility_mean_ms_non_negative():
+    result = benchmark_eligibility_matcher(n_patients=5, n_trials=2)
+    assert result["mean_ms"] >= 0.0
+
+
+def test_benchmark_ml_predictor_mean_ms():
+    result = benchmark_ml_predictor(n_patients=5)
+    assert result["mean_ms"] >= 0.0
