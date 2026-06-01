@@ -183,3 +183,29 @@ def test_parse_patient_gender(fhir, gender):
     }
     parsed = fhir.parse_patient(fhir_patient)
     assert parsed["gender"] == gender
+
+
+def test_get_patient_medications_returns_list_on_error(fhir):
+    from unittest.mock import patch
+    with patch("httpx.get", side_effect=Exception("Connection refused")):
+        meds = fhir.get_patient_medications("pt-mock")
+    assert isinstance(meds, list)
+
+
+def test_fetch_complete_profile_returns_conditions_on_error(fhir):
+    from unittest.mock import patch
+    with patch("httpx.get", side_effect=Exception("Connection refused")):
+        profile = fhir.fetch_complete_patient_profile("pt-any")
+    assert isinstance(profile.get("conditions"), list)
+
+
+def test_fhir_client_base_url_attribute():
+    from src.fhir import FHIRClient
+    c = FHIRClient(base_url="http://test.fhir.local/r4")
+    assert c.base_url == "http://test.fhir.local/r4"
+
+
+def test_fhir_all_exports():
+    from src.fhir import __all__ as exports
+    assert "FHIRClient" in exports
+    assert "fhir_client" in exports
