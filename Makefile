@@ -1,4 +1,4 @@
-.PHONY: install test test-fast test-integration lint lint-fix run docker-build docker-up docker-down clean seed coverage-ci type-check retrain benchmark
+.PHONY: install test test-fast test-integration lint lint-fix format check run docker-build docker-up docker-down clean seed coverage-ci coverage-html type-check retrain benchmark
 
 install:
 	pip install --upgrade pip
@@ -16,6 +16,14 @@ lint:
 
 lint-fix:
 	ruff check . --select E,F,W,I --ignore E501 --fix
+
+format:
+	ruff format .
+
+check: lint type-check test
+
+coverage-html:
+	pytest tests/ --cov=src --cov=pipelines --cov-report=html --cov-report=term-missing -q
 
 run:
 	uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
@@ -73,3 +81,6 @@ help:
 	@echo "  benchmark       Run performance benchmarks"
 	@echo "  validate-env    Check required environment variables"
 	@echo "  seed            Seed the database via API"
+	@echo "  format          Auto-format code with ruff"
+	@echo "  check           Run lint + type-check + test"
+	@echo "  coverage-html   Generate HTML coverage report"
