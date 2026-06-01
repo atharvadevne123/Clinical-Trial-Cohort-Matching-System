@@ -212,3 +212,17 @@ def test_medication_field_access(matcher):
     }
     result = matcher.check_match(patient, trial)
     assert result["eligible"] is True
+
+
+def test_operator_names_property(matcher):
+    names = matcher.operator_names
+    assert isinstance(names, list)
+    assert names == sorted(names)
+    assert "EQ" in names
+    assert "EXISTS" in names
+
+
+def test_repr_contains_operators(matcher):
+    r = repr(matcher)
+    assert "EligibilityMatcher" in r
+    assert "EQ" in r
