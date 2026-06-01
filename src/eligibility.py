@@ -289,6 +289,14 @@ class EligibilityMatcher:
         """Return True if a is None."""
         return a is None
 
+    @property
+    def operator_names(self) -> List[str]:
+        """Return a sorted list of registered operator names."""
+        return sorted(self.operators.keys())
+
+    def __repr__(self) -> str:
+        return f"EligibilityMatcher(operators={self.operator_names})"
+
     def score_candidates(
         self, patients: List[Dict[str, Any]], trial: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
