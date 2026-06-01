@@ -297,6 +297,20 @@ class EligibilityMatcher:
     def __repr__(self) -> str:
         return f"EligibilityMatcher(operators={self.operator_names})"
 
+    def count_eligible(
+        self, patients: List[Dict[str, Any]], trial: Dict[str, Any]
+    ) -> int:
+        """Count how many patients are eligible for a trial.
+
+        Args:
+            patients: List of patient record dicts.
+            trial: Trial record dict with inclusion/exclusion criteria.
+
+        Returns:
+            Number of eligible patients.
+        """
+        return sum(1 for p in patients if self.check_match(p, trial)["eligible"])
+
     def score_candidates(
         self, patients: List[Dict[str, Any]], trial: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
