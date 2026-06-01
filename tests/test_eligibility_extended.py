@@ -284,7 +284,8 @@ def test_not_in_operator_parametrized(matcher, a, b, expected):
     "a,b,expected",
     [
         (5, 5, True),
-        (4, 5, False),
+        (4, 5, True),
+        (6, 5, False),
         (None, 5, False),
     ],
 )
