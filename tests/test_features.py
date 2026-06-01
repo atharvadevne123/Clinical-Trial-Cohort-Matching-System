@@ -229,3 +229,34 @@ def test_build_feature_vector_medication_count():
     }
     v = build_feature_vector(patient)
     assert v[3] == 3  # num_medications
+
+
+def test_pipeline_is_fitted_before_fit():
+    pipeline = ClinicalFeaturePipeline()
+    assert pipeline.is_fitted is False
+
+
+def test_pipeline_is_fitted_after_fit():
+    patients = [{"date_of_birth": "1970-01-01", "gender": "male", "conditions": [], "medications": []}]
+    pipeline = ClinicalFeaturePipeline()
+    pipeline.fit_transform(patients)
+    assert pipeline.is_fitted is True
+
+
+def test_pipeline_reset_clears_scaler():
+    patients = [{"date_of_birth": "1970-01-01", "gender": "male", "conditions": [], "medications": []}]
+    pipeline = ClinicalFeaturePipeline()
+    pipeline.fit_transform(patients)
+    pipeline.reset()
+    assert pipeline.is_fitted is False
+
+
+def test_pipeline_feature_names_length():
+    pipeline = ClinicalFeaturePipeline()
+    assert len(pipeline.feature_names) == 14
+
+
+def test_pipeline_feature_names_contains_age():
+    pipeline = ClinicalFeaturePipeline()
+    assert "age" in pipeline.feature_names
+    assert "bmi" in pipeline.feature_names
