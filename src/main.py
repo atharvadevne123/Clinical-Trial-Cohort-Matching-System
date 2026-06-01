@@ -414,6 +414,18 @@ def delete_patient(patient_id: str, db: Session = Depends(get_db)) -> Dict[str, 
     return {"deleted": patient_id}
 
 
+@app.get("/patients/count", tags=["Patients"])
+def count_patients(
+    gender: Optional[str] = Query(None, description="Filter by gender (male/female/other)"),
+    db: Session = Depends(get_db),
+) -> Dict[str, int]:
+    """Return the total number of patient records, optionally filtered by gender."""
+    q = db.query(Patient)
+    if gender:
+        q = q.filter(Patient.gender == gender.lower())
+    return {"count": q.count()}
+
+
 @app.get("/patients", response_model=List[PatientResponse], tags=["Patients"])
 def list_patients(
     skip: int = Query(0, ge=0),
