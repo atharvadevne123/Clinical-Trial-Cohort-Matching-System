@@ -166,10 +166,20 @@ class ClinicalFeaturePipeline:
     def feature_names(self) -> List[str]:
         """Return the ordered list of feature names for the 14-dim vector."""
         return [
-            "age", "gender_male", "num_conditions", "num_medications",
-            "has_diabetes", "has_hypertension", "has_heart_disease", "has_cancer",
-            "has_afib", "smoker", "bmi", "prior_trial_participation",
-            "distance_to_site_km", "num_exclusion_flags",
+            "age",
+            "gender_male",
+            "num_conditions",
+            "num_medications",
+            "has_diabetes",
+            "has_hypertension",
+            "has_heart_disease",
+            "has_cancer",
+            "has_afib",
+            "smoker",
+            "bmi",
+            "prior_trial_participation",
+            "distance_to_site_km",
+            "num_exclusion_flags",
         ]
 
     def reset(self) -> None:

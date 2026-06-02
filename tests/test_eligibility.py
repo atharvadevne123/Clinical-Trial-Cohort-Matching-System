@@ -161,7 +161,9 @@ def test_reasons_list_populated(matcher, basic_patient, basic_trial):
         ("CONTAINS", "first_name", "bob", {"first_name": "Alice"}, False),
     ],
 )
-def test_parametrized_field_operators(matcher, operator, field, value, patient_extra, expected_eligible):
+def test_parametrized_field_operators(
+    matcher, operator, field, value, patient_extra, expected_eligible
+):
     patient = {"id": "P_PARAM2", "conditions": [], "medications": [], **patient_extra}
     trial = {
         "id": "T_PARAM2",
@@ -175,7 +177,12 @@ def test_parametrized_field_operators(matcher, operator, field, value, patient_e
 def test_score_candidates_returns_sorted_list(matcher):
     patients = [
         {"id": "P_SC1", "date_of_birth": "1990-01-01", "conditions": [], "medications": []},
-        {"id": "P_SC2", "date_of_birth": "1960-01-01", "conditions": [{"code": "I10"}], "medications": []},
+        {
+            "id": "P_SC2",
+            "date_of_birth": "1960-01-01",
+            "conditions": [{"code": "I10"}],
+            "medications": [],
+        },
     ]
     trial = {
         "id": "T_SC",
@@ -207,7 +214,9 @@ def test_medication_field_access(matcher):
     }
     trial = {
         "id": "T_MED",
-        "inclusion_criteria": [{"field": "medication:C09AA01", "operator": "EXISTS", "value": None}],
+        "inclusion_criteria": [
+            {"field": "medication:C09AA01", "operator": "EXISTS", "value": None}
+        ],
         "exclusion_criteria": [],
     }
     result = matcher.check_match(patient, trial)

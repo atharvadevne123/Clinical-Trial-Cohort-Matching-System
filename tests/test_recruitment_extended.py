@@ -95,14 +95,17 @@ class TestSendRecruitmentEmailErrors:
 class TestRecruitmentEngineInit:
     def test_default_threshold_constant_importable(self):
         from src.recruitment import _DEFAULT_SCORE_THRESHOLD
+
         assert 0.0 <= _DEFAULT_SCORE_THRESHOLD <= 1.0
 
     def test_default_batch_size_positive(self):
         from src.recruitment import _DEFAULT_BATCH_SIZE
+
         assert _DEFAULT_BATCH_SIZE > 0
 
     def test_smtp_from_importable(self):
         from src.recruitment import _SMTP_FROM
+
         assert isinstance(_SMTP_FROM, str)
 
     @pytest.mark.parametrize("host,port", [("localhost", 25), ("mail.test.com", 587)])

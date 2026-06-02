@@ -161,7 +161,15 @@ def test_predict_batch_empty_list(predictor):
 
 def test_predict_batch_single_patient(predictor):
     predictor.model = None
-    patients = [{"id": "P_SINGLE", "date_of_birth": "1975-01-01", "gender": "male", "conditions": [], "medications": []}]
+    patients = [
+        {
+            "id": "P_SINGLE",
+            "date_of_birth": "1975-01-01",
+            "gender": "male",
+            "conditions": [],
+            "medications": [],
+        }
+    ]
     results = predictor.predict_batch(patients, "T_SINGLE")
     assert len(results) == 1
     assert results[0].patient_id == "P_SINGLE"

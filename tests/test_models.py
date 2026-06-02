@@ -232,6 +232,7 @@ def test_trial_phases_persist(db, phase):
 
 def test_match_combined_score_stored(db):
     from src.models import PatientTrialMatch
+
     m = PatientTrialMatch(
         patient_id="MOD_P_SCORE",
         trial_id="MOD_T_SCORE",
@@ -242,5 +243,7 @@ def test_match_combined_score_stored(db):
     )
     db.add(m)
     db.commit()
-    fetched = db.query(PatientTrialMatch).filter(PatientTrialMatch.patient_id == "MOD_P_SCORE").first()
+    fetched = (
+        db.query(PatientTrialMatch).filter(PatientTrialMatch.patient_id == "MOD_P_SCORE").first()
+    )
     assert fetched.combined_score == 75.0

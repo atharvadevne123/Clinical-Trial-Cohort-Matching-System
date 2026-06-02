@@ -208,7 +208,9 @@ def test_pipeline_transform_after_fit():
     ]
     pipeline = ClinicalFeaturePipeline()
     pipeline.fit_transform(patients)
-    new_patients = [{"date_of_birth": "1975-01-01", "gender": "male", "conditions": [], "medications": []}]
+    new_patients = [
+        {"date_of_birth": "1975-01-01", "gender": "male", "conditions": [], "medications": []}
+    ]
     X_new = pipeline.transform(new_patients)
     assert X_new.shape == (1, 14)
 
@@ -237,14 +239,18 @@ def test_pipeline_is_fitted_before_fit():
 
 
 def test_pipeline_is_fitted_after_fit():
-    patients = [{"date_of_birth": "1970-01-01", "gender": "male", "conditions": [], "medications": []}]
+    patients = [
+        {"date_of_birth": "1970-01-01", "gender": "male", "conditions": [], "medications": []}
+    ]
     pipeline = ClinicalFeaturePipeline()
     pipeline.fit_transform(patients)
     assert pipeline.is_fitted is True
 
 
 def test_pipeline_reset_clears_scaler():
-    patients = [{"date_of_birth": "1970-01-01", "gender": "male", "conditions": [], "medications": []}]
+    patients = [
+        {"date_of_birth": "1970-01-01", "gender": "male", "conditions": [], "medications": []}
+    ]
     pipeline = ClinicalFeaturePipeline()
     pipeline.fit_transform(patients)
     pipeline.reset()
@@ -264,18 +270,21 @@ def test_pipeline_feature_names_contains_age():
 
 def test_feature_count_constant_importable():
     from src.features import _FEATURE_COUNT
+
     assert isinstance(_FEATURE_COUNT, int)
     assert _FEATURE_COUNT > 0
 
 
 def test_feature_count_matches_feature_names():
     from src.features import _FEATURE_COUNT
+
     pipeline = ClinicalFeaturePipeline()
     assert len(pipeline.feature_names) == _FEATURE_COUNT
 
 
 def test_features_all_exports_includes_feature_count():
     from src.features import __all__ as exports
+
     assert "ClinicalFeaturePipeline" in exports
     assert "_FEATURE_COUNT" in exports
     assert "DEFAULT_AGE" in exports
@@ -283,11 +292,13 @@ def test_features_all_exports_includes_feature_count():
 
 def test_default_age_is_positive():
     from src.features import DEFAULT_AGE
+
     assert DEFAULT_AGE > 0
 
 
 def test_condition_flags_importable():
     from src.features import CONDITION_FLAGS
+
     assert isinstance(CONDITION_FLAGS, dict)
     assert "has_diabetes" in CONDITION_FLAGS
     assert "has_hypertension" in CONDITION_FLAGS
@@ -295,24 +306,28 @@ def test_condition_flags_importable():
 
 def test_get_condition_count_basic():
     from src.features import get_condition_count
+
     patient = {"conditions": [{"code": "I10"}, {"code": "E11"}]}
     assert get_condition_count(patient) == 2
 
 
 def test_get_condition_count_empty():
     from src.features import get_condition_count
+
     assert get_condition_count({"conditions": []}) == 0
     assert get_condition_count({}) == 0
 
 
 def test_get_medication_count_basic():
     from src.features import get_medication_count
+
     patient = {"medications": [{"code": "B01AA03"}]}
     assert get_medication_count(patient) == 1
 
 
 def test_get_medication_count_empty():
     from src.features import get_medication_count
+
     assert get_medication_count({"medications": []}) == 0
     assert get_medication_count({}) == 0
 
@@ -323,5 +338,6 @@ def test_get_medication_count_empty():
 )
 def test_get_condition_count_parametrized(n_conds):
     from src.features import get_condition_count
+
     patient = {"conditions": [{"code": f"C{i:02d}"} for i in range(n_conds)]}
     assert get_condition_count(patient) == n_conds

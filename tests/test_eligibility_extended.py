@@ -295,6 +295,7 @@ def test_lte_operator_parametrized(matcher, a, b, expected):
 
 def test_supported_operators_importable():
     from src.eligibility import SUPPORTED_OPERATORS
+
     assert isinstance(SUPPORTED_OPERATORS, list)
     assert len(SUPPORTED_OPERATORS) > 0
     assert "EXISTS" in SUPPORTED_OPERATORS
@@ -349,10 +350,7 @@ def test_count_eligible_parametrized(matcher, n_eligible):
     patients = [
         {"id": f"P{i}", "conditions": [{"code": "I10"}], "medications": []}
         for i in range(n_eligible)
-    ] + [
-        {"id": f"P_no{i}", "conditions": [], "medications": []}
-        for i in range(5 - n_eligible)
-    ]
+    ] + [{"id": f"P_no{i}", "conditions": [], "medications": []} for i in range(5 - n_eligible)]
     trial = {
         "id": "T_PARAM",
         "inclusion_criteria": [{"field": "condition:I10", "operator": "EXISTS", "value": None}],

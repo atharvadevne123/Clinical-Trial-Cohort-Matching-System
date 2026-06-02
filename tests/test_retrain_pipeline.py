@@ -58,6 +58,7 @@ def test_run_success_returns_sample_count(tmp_path):
 
 def test_run_success_model_file_created(tmp_path):
     import os
+
     model_path = str(tmp_path / "trained_model.joblib")
     p = RetrainingPipeline(model_path=model_path, min_samples=50)
     X, y = p.generate_synthetic_data(n=100)
