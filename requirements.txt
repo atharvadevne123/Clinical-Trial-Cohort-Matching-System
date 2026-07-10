@@ -3,8 +3,8 @@ uvicorn[standard]==0.50.0
 sqlalchemy==2.0.51
 psycopg2-binary==2.9.12
 pydantic==2.13.4
-pydantic-settings==2.14.2
-xgboost>=2.1.4
+pydantic-settings==2.11.0
+xgboost>=3.2.0
 scikit-learn==1.6.1
 joblib>=1.5.3
 httpx>=0.28.1
